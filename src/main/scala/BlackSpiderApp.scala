@@ -8,7 +8,7 @@ object BlackSpiderApp {
 
   def main(args: Array[String]): Unit = {
     //list of initial urls
-    val rootUrls = Array("vnexpress.net", "dantri.com.vn");
+    val rootUrls = Array("vnexpress.net", "dantri.com.vn")
     var crawler = new Crawler;
     crawler.start(rootUrls);
   }
