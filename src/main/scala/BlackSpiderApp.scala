@@ -1,3 +1,5 @@
+import com.mongodb.casbah.commons.MongoDBObject
+import models.{EdgeUtils, Edge, EdgeDAO}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
@@ -10,6 +12,10 @@ object BlackSpiderApp {
     //list of initial urls
     val rootUrls = Array("vnexpress.net", "dantri.com.vn")
     var crawler = new Crawler;
-    crawler.start(rootUrls);
+    crawler.start(rootUrls)
+
+    var downloader = new Downloader
+    downloader.start()
+
   }
 }
