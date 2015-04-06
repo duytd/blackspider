@@ -17,10 +17,6 @@ class Downloader {
     }
   }
 
-  def reDownload: Unit = {
-
-  }
-
   def downloadData(url:Url): Unit = {
     try {
       //get the HTML content

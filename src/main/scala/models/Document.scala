@@ -11,4 +11,4 @@ import com.novus.salat.global._
 case class Document(_id: ObjectId = new ObjectId, urlId: ObjectId, content:String)
 
 object DocumentDAO extends SalatDAO[Document, ObjectId](
-  collection = MongoConnection()("blackspider")("documents"))
+  collection = DB.mongoDB("documents"))

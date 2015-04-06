@@ -6,6 +6,8 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.{SalatMongoCursor, SalatDAO}
 import com.novus.salat.global._
 
+import scala.io.Source
+
 /**
  * Created by duytd on 15/03/2015.
  */
@@ -18,7 +20,15 @@ object Edge {
   }
 
   def findAll(): SalatMongoCursor[Edge] = EdgeDAO.find(MongoDBObject.empty)
+
+  def buildEdge(child:ObjectId, parent:ObjectId): Unit = {
+    if (!Edge.existedEdge(Array(child, parent))) {
+        val edge = new Edge(vertexes = Array(child, parent))
+        EdgeDAO.insert(edge)
+        println("Built edge between "+child+" and "+parent)
+      }
+  }
 }
 
 object EdgeDAO extends SalatDAO[Edge, ObjectId](
-  collection = MongoConnection()("blackspider")("edges"))
+  collection = DB.mongoDB("edges"))

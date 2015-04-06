@@ -1,0 +1,5 @@
+package config
+
+object Constants {
+  val ROOT_URLS = Array("wikipedia")
+}

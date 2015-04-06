@@ -4,54 +4,101 @@
 
 import models._
 import org.jsoup.Jsoup
-class Crawler {
+import org.jsoup.nodes.Element
+import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.Imports.ObjectId
+import scala.collection.mutable.Queue
 
-  def start(rootUrls:Array[String]): Unit = {
-    for (rootUrl<-rootUrls) {
-      val rootUrlObj = new Url(absPath = "http://"+rootUrl, rootUrl = rootUrl)
-      buildUrlList(rootUrlObj, rootUrl)
-    }
+class Crawler(val rootUrl:String, isResumeMode:Boolean = false) {
+  // Initialize the urls queue
+  val urlQueue = new Queue[(ObjectId, String)]
+
+  // If the site is crawled from the beginning, insert root url to the queue
+  // Otherwise, load pending urls queue from the database to process
+  if (isResumeMode == false) {
+    val initialQueueItem = (new ObjectId, "http://"+rootUrl)
+    urlQueue += initialQueueItem
+    insertQueueItem(initialQueueItem)
+    println("Start crawling "+rootUrl)
+  }
+  else {
+    this.getQueueFromDB().foreach(item => {
+      urlQueue += ((item.uid, item.url))
+    })
+    println("Resume crawling "+rootUrl)
   }
 
-  def buildUrlList(targetUrl:Url, rootUrl:String, sourceUrl:Option[Url] = None): Unit = {
+  def crawl():Unit = {
+    // Stop crawling if the queue is empty
     try {
-      val source = sourceUrl.orNull
-      //get the HTML content
-
-      //check edge
-      if (source != null) {
-        if (!Edge.existedEdge(Array(targetUrl._id, source._id))) {
-          val edge = new Edge(vertexes = Array(targetUrl._id, source._id))
-          EdgeDAO.insert(edge)
-          println("Built edge between "+targetUrl.absPath+" and "+source.absPath)
-        }
+      if (urlQueue.isEmpty) {
+        println("Finish crawling "+rootUrl)
+        return;
       }
 
-      val doc = Jsoup.connect(targetUrl.absPath).get()
+      // Dequeue to process
+      val url = urlQueue.dequeue()
+      this.removeQueueItem(url._1)
 
-      //get link
-      val anchors = doc.select("a[href]").toArray
+      // Save the processing url to the database
+      saveUrlToDB(url._1, url._2)
 
-      //continue crawling other links in the HTML
-      if (anchors.length > 0) {
-        for (anchor <- anchors) {
-          val childUrl = anchor.asInstanceOf[org.jsoup.nodes.Element].attr("href")
-          if (Url.isValid(childUrl, rootUrl)) {
-            val normalizedUrl = Url.normalizeUrl(childUrl, rootUrl)
+      // Get all children of processing url
+      val children = this.findChildrenUrls(url._2)
 
-            if (!Url.existedUrl(normalizedUrl)) {
-              val normalizedUrlObj = new Url(absPath = normalizedUrl, rootUrl = rootUrl)
-              UrlDAO.insert(normalizedUrlObj)
-              println("Crawled "+normalizedUrl)
-              buildUrlList(normalizedUrlObj, rootUrl, Option(targetUrl))
-            }
-          }
+      for (i <- 0 until children.size) {
+        val anchor = children(i)
+        val newChild = anchor.asInstanceOf[Element].attr("href")
+        val normalizedNewChild = Url.normalizeUrl(newChild,rootUrl)
+
+        if (Url.isValid(newChild, rootUrl) && !existedQueueItem(normalizedNewChild) && !Url.existedUrl(normalizedNewChild)) {
+          // Enqueue the child url
+          val newQueueItem:(ObjectId, String) = (new ObjectId, normalizedNewChild)
+          urlQueue += newQueueItem
+          this.insertQueueItem(newQueueItem)
+
+          // With each child, build the edge with its parent and save to database
+          Edge.buildEdge(newQueueItem._1, url._1)
         }
       }
     }
     catch {
       case e: Exception => println("Exception caught: " + e.getMessage)
     }
+
+    crawl()
   }
 
+  def findChildrenUrls(url:String):Array[AnyRef] = {
+    println("Parsing "+url+" to get child links...")
+    val doc = Jsoup.connect(url).get()
+    doc.select("a[href]").toArray
+  }
+
+  def insertQueueItem(item:(ObjectId, String)) = {
+    val dbQueue = new DBQueue(uid = item._1, url = item._2, rootUrl = rootUrl)
+    DBQueueDAO.insert(dbQueue)
+    println("Insert "+dbQueue.url+ " to queue database")
+  }
+
+  def existedQueueItem(url:String): Boolean = {
+    urlQueue.find(_._2 == url).nonEmpty
+  }
+
+  def removeQueueItem(uid:ObjectId) = {
+    val dbQueue = DBQueueDAO.findOne(MongoDBObject("uid"->uid))
+    DBQueueDAO.remove(dbQueue.get)
+    println("Removed "+dbQueue.get.url+ " from queue database")
+  }
+
+  def getQueueFromDB():Array[DBQueue] = {
+    DBQueueDAO.find(MongoDBObject.empty).toArray
+  }
+
+  def saveUrlToDB(uid:ObjectId, url:String): Unit = {
+    val normalizedUrl = Url.normalizeUrl(url, rootUrl)
+    val normalizedUrlObj = new Url(_id = uid, absPath = normalizedUrl, rootUrl = rootUrl)
+    UrlDAO.insert(normalizedUrlObj)
+    println("Crawled "+normalizedUrl)
+  }
 }

@@ -1,6 +1,5 @@
 package models
 
-import com.mongodb.casbah.MongoConnection
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatDAO
 import com.mongodb.casbah.Imports.ObjectId
@@ -12,11 +11,11 @@ import com.novus.salat.global._
 case class Url (_id: ObjectId = new ObjectId, absPath:String = "", rootUrl:String = "", downloaded:Boolean = false, parseTime:String = null)
 
 object UrlDAO extends SalatDAO[Url, ObjectId](
-  collection = MongoConnection()("blackspider")("urls"))
+  collection = DB.mongoDB("urls"))
 
 object Url {
-  def isValid(url:String, rootUrl:String): Boolean = {
-    !isSpecialUrl(url, rootUrl) && !isRootUrl(url, rootUrl) && belongsToRootUrl(url, rootUrl)
+  def isValid(url:String, rootUrl:String, force:Boolean = false): Boolean = {
+    !isSpecialUrl(url, rootUrl) && !isRootUrl(url, rootUrl) && (belongsToRootUrl(url, rootUrl) || !isAbsoluteUrl(url))
   }
 
   /* Check whether an url belongs to root */
@@ -24,6 +23,11 @@ object Url {
     val urlRegex = "^([\\w+]+:\\/\\/)?(\\w+)(\\.\\w+)*".r
     val domain = urlRegex.findFirstIn(url).toString
     domain.contains(rootUrl)
+  }
+
+  def isAbsoluteUrl(url:String): Boolean = {
+    val absoluteUrlRegex = "^(http(s)?:\\/\\/).*".r
+    absoluteUrlRegex.pattern.matcher(url).matches()
   }
 
   def isRootUrl(url:String, rootUrl:String):Boolean = {
@@ -37,6 +41,11 @@ object Url {
       url.contains("tel:") || url.contains("javascript")
   }
 
+  def removePrefixesFromUrl(url:String): String = {
+    val prefixesRegex = "(http(s)?:\\/\\/)(www\\.)?".r
+    prefixesRegex.replaceAllIn(url,"")
+  }
+
   //check whether and url existed in the database
   def existedUrl(url:String):Boolean = {
     UrlDAO.findOne(MongoDBObject("absPath"->url)).nonEmpty
@@ -44,28 +53,19 @@ object Url {
 
   //normalize url: relative link-> absolute link
   def normalizeUrl(url:String, rootUrl:String): String = {
-    var initialUrl = url
-    val prefixes = Array("http://", "https://", "www.")
-    var isAbsoluteUrl = false
-
-    //remove prefixes
-    for (prefix<-prefixes) {
-      if (initialUrl.contains(prefix)) {
-        initialUrl = initialUrl.replaceAll(prefix, "")
-        isAbsoluteUrl = true
-      }
-    }
+    var initialUrl = Url.removePrefixesFromUrl(url)
 
     //remove trailing hashtag and slash
     if (initialUrl.last == '/' || initialUrl.last == '#') {
       initialUrl = initialUrl.dropRight(1)
     }
 
-    if (!isAbsoluteUrl) {
-      "http://"+rootUrl+initialUrl
-    }
-    else {
+    if (Url.isAbsoluteUrl(url)) {
       "http://"+initialUrl
     }
+    else {
+      "http://"+rootUrl+initialUrl
+    }
   }
+
 }
