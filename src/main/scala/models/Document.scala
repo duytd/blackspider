@@ -1,6 +1,5 @@
 package models
 
-import com.mongodb.casbah.MongoConnection
 import com.mongodb.casbah.Imports.ObjectId
 import com.novus.salat.dao.SalatDAO
 import com.novus.salat.global._

@@ -1,3 +1,4 @@
+import models.Downloader
 /**
  * Created by duytd on 25/03/2015.
  */

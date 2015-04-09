@@ -1,12 +1,9 @@
 package models
 
-import com.mongodb.casbah.MongoConnection
 import com.mongodb.casbah.Imports.ObjectId
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.{SalatMongoCursor, SalatDAO}
 import com.novus.salat.global._
-
-import scala.io.Source
 
 /**
  * Created by duytd on 15/03/2015.

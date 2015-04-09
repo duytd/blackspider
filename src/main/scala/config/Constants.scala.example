@@ -1,5 +1,10 @@
-package config
+/**
+ * Configuration
+ *
+ * @author duytd
+ */
 
 object Constants {
-  val ROOT_URLS = Array("wikipedia")
+  // a tuple consists of root url and rss source link
+  val TARGET_URLS = Array(("targetwebsite.com","http://targetwebsite.com/rss"))
 }
