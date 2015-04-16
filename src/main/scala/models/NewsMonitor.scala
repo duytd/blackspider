@@ -19,6 +19,7 @@ class NewsMonitor(val rssSource:String, val rootUrl:String) {
       rssCategories.foreach(category=> {
         fetchNews(category)
       })
+      println("Finish updating...")
     }
     catch {
       case e: Exception => println("Exception caught: " + e.getMessage)
@@ -42,7 +43,7 @@ class NewsMonitor(val rssSource:String, val rootUrl:String) {
       val url = Url.normalizeUrl(anchor.asInstanceOf[Element].nextSibling().toString.trim(), rootUrl)
 
       // Save un-existed news to the queues database to crawl later
-      if(!Url.existedUrl(url) && DBQueue.existedDBQueue(url)) {
+      if(!Url.existedUrl(url) && !DBQueue.existedDBQueue(url)) {
         val newQueueItem:(ObjectId, String) = (new ObjectId, url)
         Crawler.insertQueueItem(newQueueItem, rootUrl)
       }

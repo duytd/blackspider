@@ -4,6 +4,7 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatDAO
 import com.mongodb.casbah.Imports.ObjectId
 import com.novus.salat.global._
+import org.codelibs._
 
 /**
  * Single web node
