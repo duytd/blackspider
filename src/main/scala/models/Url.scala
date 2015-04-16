@@ -63,7 +63,7 @@ object Url {
     }
   }
 
-  /* A function to check whether and url existed in the database */
+  /* A function to check whether an url existed in the database */
   def existedUrl(url:String):Boolean = {
     UrlDAO.findOne(MongoDBObject("absPath"->url)).nonEmpty
   }

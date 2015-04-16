@@ -73,7 +73,7 @@ class Crawler(val rootUrl:String, isResumeMode:Boolean = false) {
   }
 
   private def existedQueueItem(url:String): Boolean = {
-    urlQueue.find(_._2 == url).nonEmpty
+    urlQueue.find(_._2 == url).nonEmpty && DBQueue.existedDBQueue(url)
   }
 
   private def removeQueueItem(uid:ObjectId) = {

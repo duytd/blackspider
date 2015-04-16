@@ -4,7 +4,7 @@ import org.jsoup.nodes.Element
 import com.mongodb.casbah.Imports.ObjectId
 /** A rss monitor which has duty to monitor and updated latest news of a web root(rootUrl)
   *
-  * @constructor create a monitor with a rssSource and rootUrl
+  * @constructor create a monitor with a rssSource, rootUrl and running crawler
   * @param rootUrl root web node (E.g wikipedia.com,cnn.com,...)
   * @param rssSource Rss source link of a website (E.g http://edition.cnn.com/services/rss/,...)
   * @author duytd
@@ -41,27 +41,10 @@ class NewsMonitor(val rssSource:String, val rootUrl:String) {
     news.foreach(anchor => {
       val url = Url.normalizeUrl(anchor.asInstanceOf[Element].nextSibling().toString.trim(), rootUrl)
 
-      if(!Url.existedUrl(url)) {
-        // Save to database
-        val newsObj = Url.saveUrlToDB(new ObjectId, url, rootUrl)
-
-        // Download html content
-        Downloader.download(newsObj)
-
-        // Build edges
-        val children = Crawler.fetchChildrenUrls(url)
-        children.foreach(child => {
-          val normalizedChild = Url.normalizeUrl(child.asInstanceOf[Element].attr("href"), rootUrl)
-          val existedUrl = Url.find(normalizedChild)
-          if (existedUrl.nonEmpty) {
-            Edge.buildEdge(existedUrl.get._id, newsObj._id)
-          }
-          else {
-            // Save un-existed children to the queues database to crawl later
-            val newQueueItem:(ObjectId, String) = (new ObjectId, normalizedChild)
-            Crawler.insertQueueItem(newQueueItem, rootUrl)
-          }
-        })
+      // Save un-existed news to the queues database to crawl later
+      if(!Url.existedUrl(url) && DBQueue.existedDBQueue(url)) {
+        val newQueueItem:(ObjectId, String) = (new ObjectId, url)
+        Crawler.insertQueueItem(newQueueItem, rootUrl)
       }
     })
   }
