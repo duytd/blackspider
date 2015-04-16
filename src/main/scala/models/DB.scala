@@ -3,7 +3,8 @@ package models
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 
 /**
- * Created by duytd on 02/04/2015.
+ * MongoDB connection configuration
+ * @author duytd
  */
 object DB {
   private val uri = MongoClientURI("mongodb://localhost")

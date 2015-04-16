@@ -5,7 +5,8 @@ import com.novus.salat.dao.SalatDAO
 import com.novus.salat.global._
 
 /**
- * Created by duytd on 15/03/2015.
+ * Pending web nodes which will be dequeue later to crawl
+ * @author duytd
  */
 case class DBQueue(_id: ObjectId = new ObjectId, uid:ObjectId, url: String, rootUrl:String)
 

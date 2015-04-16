@@ -1,6 +1,8 @@
 import models.Downloader
+
 /**
- * Created by duytd on 25/03/2015.
+ * Downloader main program
+ * @author duytd
  */
 object DownloaderMain {
   def main(args: Array[String]): Unit = {

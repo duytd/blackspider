@@ -5,7 +5,8 @@ import com.novus.salat.dao.SalatDAO
 import com.novus.salat.global._
 
 /**
- * Created by duytd on 15/03/2015.
+ * Web node html content
+ * @author duytd
  */
 case class Document(_id: ObjectId = new ObjectId, urlId: ObjectId, content:String)
 

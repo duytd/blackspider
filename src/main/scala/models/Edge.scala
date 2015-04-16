@@ -6,7 +6,8 @@ import com.novus.salat.dao.{SalatMongoCursor, SalatDAO}
 import com.novus.salat.global._
 
 /**
- * Created by duytd on 15/03/2015.
+ * A link between two web nodes
+ * @author duytd
  */
 case class Edge (_id: ObjectId = new ObjectId, vertexes:Array[ObjectId])
 

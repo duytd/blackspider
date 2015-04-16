@@ -1,5 +1,6 @@
 /**
- * Created by duytd on 15/03/2015.
+ * Crawler main program
+ * @author duytd
  */
 
 import models.Crawler
@@ -8,9 +9,10 @@ import config.Constants
 import models.{DBQueueDAO, Url}
 
 object CrawlerMain {
-
   def main(args: Array[String]): Unit = {
     val targetUrls = Constants.TARGET_URLS
+
+    // Extract target urls array and start crawling
     targetUrls.foreach(url=> {
       val queueSize = DBQueueDAO.count(MongoDBObject("rootUrl"->url._1))
       var isResumeMode = false

@@ -6,8 +6,7 @@ import com.mongodb.casbah.Imports.ObjectId
 import com.novus.salat.global._
 
 /**
- * Each url is the a single web node which will be downloaded by the Downloader. Url cannot be duplicated
- *
+ * Single web node
  * @author duytd
  */
 case class Url (_id: ObjectId = new ObjectId, absPath:String = "", rootUrl:String = "", downloaded:Boolean = false, parseTime:String = null)
