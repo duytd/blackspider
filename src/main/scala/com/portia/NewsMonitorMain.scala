@@ -1,5 +1,3 @@
-import config.Constants
-
 /**
  * News monitor main program
  * @author duytd

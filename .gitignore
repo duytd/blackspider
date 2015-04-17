@@ -23,4 +23,4 @@ project/plugins/project/
 ## Directory-based project format:
 .idea/
 
-src/main/scala/config/Constants.scala
+src/main/scala/com/portia/config/Constants.scala

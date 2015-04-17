@@ -5,7 +5,6 @@
 
 import models.Crawler
 import com.mongodb.casbah.commons.MongoDBObject
-import config.Constants
 import models.{DBQueueDAO, Url}
 
 object CrawlerMain {
