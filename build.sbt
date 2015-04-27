@@ -1,6 +1,6 @@
 name := "blackspider"
 
-organization := "org.qmlstudio"
+organization := "org.portia"
 
 version := "1.0"
 

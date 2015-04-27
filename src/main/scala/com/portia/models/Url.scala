@@ -4,7 +4,6 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatDAO
 import com.mongodb.casbah.Imports.ObjectId
 import com.novus.salat.global._
-import org.codelibs._
 
 /**
  * Single web node
@@ -71,6 +70,10 @@ object Url {
 
   def find(url:String):Option[Url] = {
     UrlDAO.findOne(MongoDBObject("absPath"->url))
+  }
+
+  def findById(id:ObjectId):Option[Url] = {
+    UrlDAO.findOne(MongoDBObject("_id"->id))
   }
 
   def saveUrlToDB(uid:ObjectId, url:String, rootUrl:String): Url = {

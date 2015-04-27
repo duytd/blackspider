@@ -29,8 +29,8 @@ class Downloader {
 object Downloader {
   def download(url:Url): Unit = {
     try {
-      // Get the HTML content
-      val doc = Jsoup.connect(url.absPath).get()
+      // Get the HTML body content
+      val doc = Jsoup.connect(url.absPath).get().body()
 
       println("Downloading " + url.absPath + "...")
 
