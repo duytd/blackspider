@@ -7,6 +7,7 @@ import com.portia.models.{CategoryDAO, Category}
 import models.DocumentDAO
 import models.Document
 import scala.io.Source
+import com.mongodb.casbah.Imports._
 
 /**
  * @author qmha
@@ -28,21 +29,21 @@ class TrainData {
     }
   }
 
-  def assignCategoryToDoc(doc:Document): Unit = {
-    val urlPath = doc.url.absPath
+  def assignCategoryToDoc(absPath:String): ObjectId = {
+    val urlPath = absPath
     for (line <- Source.fromURL(getClass.getResource(this.categoryFilePath), "UTF-8").getLines()) {
-      val category = line.split("|")
+      val category = line.split('|')
 
       if (category(2).trim != null) {
         val cSlug = category(2).trim
         if (urlPath.contains(cSlug)) {
-          val cAlias = category(1).trim
+          val cAlias = category(0).trim
           val categoryObj = Category.findByAlias(cAlias).get
-          val updateDoc = doc.copy(categoryId = categoryObj._id)
-          DocumentDAO.update(MongoDBObject("_id"->doc._id), updateDoc, upsert = false, multi = false, new WriteConcern)
+          return categoryObj._id
         }
       }
     }
+    return null
   }
 
   def train(): Unit = {

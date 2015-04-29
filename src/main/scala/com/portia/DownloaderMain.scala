@@ -8,8 +8,8 @@ import org.jsoup.Jsoup
 object DownloaderMain {
   def main(args: Array[String]): Unit = {
     var downloader = new Downloader
-    //downloader.start
-    val doc = Jsoup.connect("http://vnexpress.net/tin-tuc/oto-xe-may/mazdaspeed3-hatchback-the-thao-sap-ra-doi-3207352.html").get().text()
-    println(Document.extractArticle(doc))
+    downloader.start
+    //val doc = Jsoup.connect("http://vnexpress.net/tin-tuc/oto-xe-may/mazdaspeed3-hatchback-the-thao-sap-ra-doi-3207352.html").get().text()
+    //println(Document.extractArticle(doc))
   }
 }

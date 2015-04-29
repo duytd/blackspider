@@ -3,6 +3,7 @@ package models
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatMongoCursor
+import com.portia.training.TrainData
 import org.jsoup.Jsoup
 import com.github.nscala_time.time.Imports._
 
@@ -30,7 +31,7 @@ object Downloader {
   def download(url:Url): Unit = {
     try {
       // Get the HTML body content
-      val doc = Jsoup.connect(url.absPath).get().body()
+      val doc = Jsoup.connect(url.absPath).get.body()
 
       println("Downloading " + url.absPath + "...")
 
@@ -39,7 +40,9 @@ object Downloader {
       UrlDAO.update(MongoDBObject("_id"->url._id), updateUrl, upsert = false, multi = false, new WriteConcern)
 
       // Save content to the database
-      val documentObj = new Document(urlId = url._id, content = doc.toString)
+      val trainData = new TrainData
+      val documentObj = new Document(urlId = url._id, content = doc.toString,
+                                      categoryId = trainData.assignCategoryToDoc(url.absPath))
       DocumentDAO.insert(documentObj)
 
       println("Finish downloading " + updateUrl.toString)
