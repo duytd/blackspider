@@ -26,7 +26,7 @@ class Tokenizer {
   }
 
   /* Method to tokenize English document using Standard Analyzer (Lucene) */
-  private def tokenize(text:String): ArrayList[String] = {
+  def tokenize(text:String): ArrayList[String] = {
     val analyzer = new StandardAnalyzer()
     getTokens(analyzer, text)
   }

@@ -1,13 +1,20 @@
 package com.portia.training
 
+import com.portia.algorithms.NaiveBayesClassifier
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
  * @author qmha
  */
 class TrainData {
-  var mapper:ArrayBuffer[Tuple2[String, String]] = new ArrayBuffer[Tuple2[String, String]]()
+  // Update categoryID for Document
+  def updateCategory(): Unit = {
 
-  def getMapper(): Unit = {
+  }
+
+  def train(): Unit = {
+    var nbc:NaiveBayesClassifier = new NaiveBayesClassifier
+    nbc.learnNaiveBayesText
   }
 }
