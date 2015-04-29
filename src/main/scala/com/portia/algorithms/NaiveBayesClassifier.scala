@@ -21,13 +21,16 @@ class NaiveBayesClassifier {
   vocabulary = getVocabulary
   categories = getCategories
 
+  /*
   def classifyNBC(document: Document): Category = {
     var tokenizer = new Tokenizer
     var tokens:util.ArrayList[String] = tokenizer.tokenize(document.content)
     vocabulary.foreach(token => {
 
     })
+    new Category
   }
+  */
 
   def learnNaiveBayesText = {
     // For each category

@@ -1,0 +1,14 @@
+world | Thế giới | the-gioi
+social | Xã hội | xa-hoi
+culture | Văn hóa | van-hoa
+economy | Kinh tế | kinh-doanh
+tech | KH-CN | suc-manh-so
+sport | Thể thao | the-thao
+entertainment | Giải trí | giai-tri
+law | Pháp luật | phap-luat
+education | Giáo dục | giao-duc-khuyen-hoc
+health | Sức khỏe | suc-khoe
+transport | Ô tô - Xe máy | o-to-xe-may
+young | Giới trẻ | nhip-song-tre
+travel | Du lịch | dulich
+real_estate | Nhà đất |

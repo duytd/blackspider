@@ -9,7 +9,7 @@ import de.l3s.boilerpipe.extractors.ArticleExtractor
  * Web node html content
  * @author duytd
  */
-case class Document(_id: ObjectId = new ObjectId, urlId: ObjectId, content:String, tokenized:Boolean = false) {
+case class Document(_id: ObjectId = new ObjectId, urlId: ObjectId, content:String, tokenized:Boolean = false, categoryId:ObjectId = null) {
   def url: Url = {
     Url.findById(this.urlId).get
   }
