@@ -1,6 +1,6 @@
 package com.portia.algorithms
 
-import models.Url
+import models.{UrlDAO, Edge, Url}
 
 import scala.collection.mutable.ArrayBuffer
 import com.mongodb.casbah.Imports._
@@ -11,7 +11,7 @@ import com.mongodb.casbah.Imports._
 class PageRank {
   val c:Double = 0.85
   var iterations:Int = 10000
-  var urls: ArrayBuffer[Url] = getUrls
+  var urls: Array[Url] = getUrls
 
   def run: Unit = {
     for (i <- 0 until iterations) {
@@ -41,11 +41,23 @@ class PageRank {
 
   }
 
-  def getUrls:ArrayBuffer[Url] = {
-    new ArrayBuffer[Url]()
+  def getUrls:Array[Url] = {
+    UrlDAO.find(MongoDBObject.empty).toArray
   }
 
   def getEdgesByUrl(url_id: ObjectId):ArrayBuffer[Url] = {
-    new ArrayBuffer[Url]()
+    var results:ArrayBuffer[Url] = new ArrayBuffer[Url]()
+    val edges = Edge.findAll().toArray
+    edges.foreach(edge => {
+      if (edge.vertexes(0) == url_id && edge.vertexes(1) != url_id) {
+        results += Url.findById(edge.vertexes(1)).get
+      }
+
+      if (edge.vertexes(0) != url_id && edge.vertexes(1) == url_id) {
+        results += Url.findById(edge.vertexes(0)).get
+      }
+    })
+
+    results
   }
 }
