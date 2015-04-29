@@ -1,6 +1,7 @@
 package com.portia.algorithms
 
-import models.{UrlDAO, Edge, Url}
+import com.mongodb.casbah.commons.MongoDBObject
+import models.{EdgeDAO, UrlDAO, Edge, Url}
 
 import scala.collection.mutable.ArrayBuffer
 import com.mongodb.casbah.Imports._
@@ -18,10 +19,11 @@ class PageRank {
       println("Iteration " + i)
 
       // For all URL
-      urls.foreach(url => {
+
+      (0 until urls.size).par.foreach(i => {
         var pr = 0.15
         // Loop through all pages that link to this one
-        val linkers = getEdgesByUrl(url._id)
+        val linkers = getEdgesByUrl(urls(i)._id)
         linkers.foreach(linker => {
           // Get the pagerank of the linker
           val linkingpr = linker.pageRank
@@ -32,13 +34,15 @@ class PageRank {
         })
 
         // Update pagerank to database
-        updatePageRank(url._id, pr)
+        updatePageRank(urls(i)._id, pr)
       })
     }
   }
 
   def updatePageRank(url_id: ObjectId, pageRank:Double) = {
-
+    val url = Url.findById(url_id).get
+    val updatedUrl = url.copy(pageRank = pageRank)
+    UrlDAO.update(MongoDBObject("_id"->url_id), updatedUrl, upsert = false, multi = false, new WriteConcern)
   }
 
   def getUrls:Array[Url] = {
@@ -47,14 +51,18 @@ class PageRank {
 
   def getEdgesByUrl(url_id: ObjectId):ArrayBuffer[Url] = {
     var results:ArrayBuffer[Url] = new ArrayBuffer[Url]()
-    val edges = Edge.findAll().toArray
+    val edges = EdgeDAO.find(MongoDBObject("$or"->(MongoDBObject("source"->url_id), MongoDBObject("target"->url_id)))).toList
     edges.foreach(edge => {
-      if (edge.vertexes(0) == url_id && edge.vertexes(1) != url_id) {
-        results += Url.findById(edge.vertexes(1)).get
+      if (edge.source == url_id && edge.target != url_id) {
+        //println("Found 1! " + edge.target)
+        //println(Url.findById(edge.target).get)
+        results += Url.findById(edge.target).get
       }
 
-      if (edge.vertexes(0) != url_id && edge.vertexes(1) == url_id) {
-        results += Url.findById(edge.vertexes(0)).get
+      if (edge.source != url_id && edge.target == url_id) {
+        //println("Found 2! " + edge.target)
+        //println(Url.findById(edge.source).get)
+        results += Url.findById(edge.source).get
       }
     })
 

@@ -11,4 +11,3 @@ health | Sức khỏe | suc-khoe
 transport | Ô tô - Xe máy | o-to-xe-may
 young | Giới trẻ | nhip-song-tre
 travel | Du lịch | dulich
-real_estate | Nhà đất |

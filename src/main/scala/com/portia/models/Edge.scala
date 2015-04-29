@@ -9,7 +9,7 @@ import com.novus.salat.global._
  * A link between two web nodes
  * @author duytd
  */
-case class Edge (_id: ObjectId = new ObjectId, vertexes:Array[ObjectId])
+case class Edge (_id: ObjectId = new ObjectId, source:ObjectId, target:ObjectId)
 
 object Edge {
   //check whether the new edge is existed or not
@@ -21,7 +21,7 @@ object Edge {
 
   def buildEdge(child:ObjectId, parent:ObjectId): Unit = {
     if (!Edge.existedEdge(Array(child, parent))) {
-        val edge = new Edge(vertexes = Array(child, parent))
+        val edge = new Edge(source = parent, target = child)
         EdgeDAO.insert(edge)
         println("Built edge between "+child+" and "+parent)
       }
