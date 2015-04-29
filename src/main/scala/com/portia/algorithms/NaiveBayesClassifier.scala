@@ -2,18 +2,19 @@ package com.portia.algorithms
 
 import java.util
 
-import models.{Tokenizer, DocTokens, Document}
+import models.{Tokenizer, Token, Document}
 
 import scala.collection.mutable.ArrayBuffer
 
 import com.portia.models.Category
+import com.mongodb.casbah.Imports.ObjectId
 
 /**
  * @author qmha
  */
 class NaiveBayesClassifier {
   var examples:ArrayBuffer[Document] = new ArrayBuffer[Document]()
-  var vocabulary:ArrayBuffer[DocTokens] = new ArrayBuffer[DocTokens]()
+  var vocabulary:ArrayBuffer[Token] = new ArrayBuffer[Token]()
   var categories:ArrayBuffer[Category] = new ArrayBuffer[Category]()
 
   examples = getExamples
@@ -53,12 +54,12 @@ class NaiveBayesClassifier {
     new ArrayBuffer[Document]()
   }
 
-  def concatenateDocumentByCategory(documents: ArrayBuffer[Document]):ArrayBuffer[DocTokens] = {
-    new ArrayBuffer[DocTokens]()
+  def concatenateDocumentByCategory(documents: ArrayBuffer[Document]):ArrayBuffer[Token] = {
+    new ArrayBuffer[Token]()
   }
 
-  def getVocabulary:ArrayBuffer[DocTokens] = {
-    new ArrayBuffer[DocTokens]()
+  def getVocabulary:ArrayBuffer[Token] = {
+    new ArrayBuffer[Token]()
   }
 
   def getExamples():ArrayBuffer[Document] = {

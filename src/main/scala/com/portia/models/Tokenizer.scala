@@ -1,7 +1,6 @@
 package models
 
 import java.io.StringReader
-import java.util
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import org.apache.lucene.analysis._
@@ -9,7 +8,6 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.analysis.util.CharArraySet
 import org.apache.lucene.util.Version
-import vn.hus.nlp.tokenizer.VietTokenizer
 import java.util.ArrayList
 import org.jsoup.Jsoup
 import scala.io.Source
@@ -32,8 +30,7 @@ class Tokenizer(lang:String = "en") {
     documents.foreach(doc => {
       var tokens = new ArrayList[String]
       tokens = tokenize(Jsoup.parse(doc.content).text())
-      //saveTokensToDB(doc, tokens)
-      println(tokens.toString)
+      saveTokensToDB(doc, tokens)
     })
   }
 
@@ -54,25 +51,14 @@ class Tokenizer(lang:String = "en") {
     getTokens(analyzer, text)
   }
 
-  /* Method to tokenize Vietnamese document using vnTokenizer */
-  def tokenizeVi(text: String): util.ArrayList[String] = {
-    val tokenizer = new VietTokenizer
-    var tokens = new ArrayList[String]
-    tokenizer.tokenize(text)(0).split(" ").toList.foreach(token => {
-
-      if (!STOP_WORDS.contains(token)) {
-        //remove underscore from compound words
-        val normalizedToken = token.replace("_", " ")
-        tokens.add(normalizedToken)
+  private def saveTokensToDB(document: Document, tokenNames:ArrayList[String]): Unit ={
+    tokenNames.toArray.foreach(tokenName => {
+      if (!Token.existedToken(tokenName.toString)) {
+        val tokenObj = new Token(name = tokenName.toString)
+        TokenDAO.insert(tokenObj)
+        println("Inserted token: " + tokenName)
       }
     })
-    tokens
-  }
-
-  private def saveTokensToDB(document: Document, tokens:ArrayList[String]): Unit ={
-    val docTokensObj = new DocTokens(documentId = document._id, tokens = tokens)
-    DocTokensDAO.insert(docTokensObj)
-    println("Tokenized " + document.url.absPath)
 
     // Mark document as tokenized
     val updatedDoc = document.copy(tokenized = true)
