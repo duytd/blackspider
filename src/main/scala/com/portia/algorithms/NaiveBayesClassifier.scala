@@ -2,40 +2,56 @@ package com.portia.algorithms
 
 import java.util
 
-import models.{Tokenizer, Token, Document}
+import com.mongodb.casbah.commons.MongoDBObject
+import models._
 
 import scala.collection.mutable.ArrayBuffer
 
-import com.portia.models.Category
+import com.portia.models.{CategoryDAO, TokenScoreDAO, TokenScore, Category}
 import com.mongodb.casbah.Imports.ObjectId
 
 /**
  * @author qmha
  */
 class NaiveBayesClassifier {
-  var examples:ArrayBuffer[Document] = new ArrayBuffer[Document]()
-  var vocabulary:ArrayBuffer[Token] = new ArrayBuffer[Token]()
-  var categories:ArrayBuffer[Category] = new ArrayBuffer[Category]()
+  var examples:Array[Document] = getExamples()
+  var vocabulary:Array[Token] = getVocabulary
+  var categories:Array[Category] = getCategories()
 
-  examples = getExamples
-  vocabulary = getVocabulary
-  categories = getCategories
-
-  /*
   def classifyNBC(document: Document): Category = {
-    var tokenizer = new Tokenizer
-    var tokens:util.ArrayList[String] = tokenizer.tokenize(document.content)
-    vocabulary.foreach(token => {
+    var VNB:ArrayBuffer[(Category, Double)]= new ArrayBuffer[(Category, Double)]()
+    val tokenizer = new Tokenizer
+    val tokens:util.ArrayList[String] = tokenizer.tokenize(document.content)
 
+    categories.foreach(category => {
+      var v_j:Double = 1
+      val doc_j = Document.getDocumentsByCategory(category._id)
+      val P_vj = doc_j.size / examples.size
+
+      for (i <- 0 until tokens.size()) {
+        // find this token
+        val token = TokenDAO.findOne(MongoDBObject("name"->tokens.get(i))).get
+        // get this score
+        val score = TokenScoreDAO.findOne(
+          MongoDBObject("$and"->(MongoDBObject("tokenId"->token._id), MongoDBObject("categoryId"->category._id)))).get
+
+        v_j = v_j * score.score
+      }
+
+      v_j = v_j * P_vj
+
+      // Save
+      VNB += ((category, v_j))
     })
-    new Category
+
+    // Return max
+    VNB.sortWith(_._2 >= _._2)(0)._1
   }
-  */
 
   def learnNaiveBayesText = {
     // For each category
     categories.foreach(category => {
-      var doc_j = getDocumentByCategory(category._id)
+      var doc_j = Document.getDocumentsByCategory(category._id)
       var P_vj = doc_j.size / examples.size
       var Text_j = concatenateDocumentByCategory(doc_j)
       var n = Text_j.distinct.size
@@ -50,26 +66,30 @@ class NaiveBayesClassifier {
   }
 
   def insertIntoDatabase(tokenId: ObjectId, categoryId: ObjectId, score: Double) = {
-
+    val tokenScore = new TokenScore(tokenId = tokenId, categoryId = categoryId, score = score)
+    TokenScoreDAO.insert(tokenScore)
   }
 
-  def getDocumentByCategory(_id: ObjectId):ArrayBuffer[Document] = {
-    new ArrayBuffer[Document]()
+  def concatenateDocumentByCategory(documents: Array[Document]):ArrayBuffer[String] = {
+    var result:ArrayBuffer[String] = new ArrayBuffer[String]()
+    val tokenizer = new Tokenizer()
+    documents.foreach(doc=>{
+      tokenizer.tokenize(doc.content).toArray.foreach(_ => {
+        result += _
+      })
+    })
+    result.distinct
   }
 
-  def concatenateDocumentByCategory(documents: ArrayBuffer[Document]):ArrayBuffer[Token] = {
-    new ArrayBuffer[Token]()
+  def getVocabulary:Array[Token] = {
+    TokenDAO.find(MongoDBObject.empty).toArray
   }
 
-  def getVocabulary:ArrayBuffer[Token] = {
-    new ArrayBuffer[Token]()
+  def getExamples():Array[Document] = {
+    DocumentDAO.find(MongoDBObject.empty).toArray
   }
 
-  def getExamples():ArrayBuffer[Document] = {
-    new ArrayBuffer[Document]()
-  }
-
-  def getCategories():ArrayBuffer[Category] = {
-    new ArrayBuffer[Category]()
+  def getCategories():Array[Category] = {
+    CategoryDAO.find(MongoDBObject.empty).toArray
   }
 }
