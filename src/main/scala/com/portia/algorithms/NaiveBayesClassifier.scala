@@ -24,7 +24,7 @@ class NaiveBayesClassifier {
     var tokenizer = new Tokenizer
     var tokens:util.ArrayList[String] = tokenizer.tokenize(document.content)
     vocabulary.foreach(token => {
-      
+
     })
   }
 
