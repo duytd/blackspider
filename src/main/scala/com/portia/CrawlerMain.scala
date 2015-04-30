@@ -1,12 +1,12 @@
+import com.portia.models.Crawler
+import com.portia.models.{DBQueueDAO}
+import com.portia.config.Constants
+import com.mongodb.casbah.commons.MongoDBObject
+
 /**
  * Crawler main program
  * @author duytd
  */
-
-import models.Crawler
-import com.mongodb.casbah.commons.MongoDBObject
-import models.{DBQueueDAO, Url}
-
 object CrawlerMain {
   def main(args: Array[String]): Unit = {
     val targetUrls = Constants.TARGET_URLS
@@ -18,7 +18,8 @@ object CrawlerMain {
       if (queueSize > 0) {
         isResumeMode = true
       }
-      val crawler = new Crawler(url._1, isResumeMode = isResumeMode)
+
+      val crawler = new Crawler(isResumeMode = isResumeMode, rootUrl = url._1)
       crawler.crawl()
     })
   }

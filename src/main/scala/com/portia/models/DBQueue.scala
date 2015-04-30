@@ -1,4 +1,4 @@
-package models
+package com.portia.models
 
 import com.mongodb.casbah.Imports.ObjectId
 import com.mongodb.casbah.commons.MongoDBObject

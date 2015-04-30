@@ -1,8 +1,7 @@
 package com.portia.algorithms
 
 import com.mongodb.casbah.commons.MongoDBObject
-import models.{EdgeDAO, UrlDAO, Edge, Url}
-
+import com.portia.models.{EdgeDAO, UrlDAO, Url}
 import scala.collection.mutable.ArrayBuffer
 import com.mongodb.casbah.Imports._
 
@@ -14,13 +13,12 @@ class PageRank {
   var iterations:Int = 10000
   var urls: Array[Url] = getUrls
 
-  def run: Unit = {
+  def run(): Unit = {
     for (i <- 0 until iterations) {
       println("Iteration " + i)
 
       // For all URL
-
-      (0 until urls.size).par.foreach(i => {
+      (0 until urls.length).par.foreach(i => {
         var pr = 0.15
         // Loop through all pages that link to this one
         val linkers = getEdgesByUrl(urls(i)._id)
@@ -54,14 +52,10 @@ class PageRank {
     val edges = EdgeDAO.find(MongoDBObject("$or"->(MongoDBObject("source"->url_id), MongoDBObject("target"->url_id)))).toList
     edges.foreach(edge => {
       if (edge.source == url_id && edge.target != url_id) {
-        //println("Found 1! " + edge.target)
-        //println(Url.findById(edge.target).get)
         results += Url.findById(edge.target).get
       }
 
       if (edge.source != url_id && edge.target == url_id) {
-        //println("Found 2! " + edge.target)
-        //println(Url.findById(edge.source).get)
         results += Url.findById(edge.source).get
       }
     })

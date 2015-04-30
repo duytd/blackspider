@@ -1,4 +1,4 @@
-package models
+package com.portia.models
 import scala.collection.mutable.Queue
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -12,7 +12,7 @@ import com.mongodb.casbah.Imports.ObjectId
   * @param isResumeMode decide whether the crawler will crawl from the beginning or not
   * @author minhhq, duytd
   */
-class Crawler(val rootUrl:String, isResumeMode:Boolean = false) {
+class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
   // Initialize an empty urls queue
   val urlQueue = new Queue[(ObjectId, String)]
 
@@ -93,7 +93,7 @@ class Crawler(val rootUrl:String, isResumeMode:Boolean = false) {
   }
 }
 
-/** Factory for [[models.Crawler]] instances. */
+/** Factory for [[com.portia.models.Crawler]] instances. */
 object Crawler {
   /** Put pending nodes to the database so that they can be accessed later
     */

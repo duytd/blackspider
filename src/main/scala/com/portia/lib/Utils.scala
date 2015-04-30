@@ -1,4 +1,4 @@
-package lib
+package com.portia.lib
 import org.jsoup.Jsoup
 
 /**

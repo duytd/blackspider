@@ -1,9 +1,8 @@
-package models
+package com.portia.models
 
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatMongoCursor
-import com.portia.training.TrainData
 import org.jsoup.Jsoup
 import com.github.nscala_time.time.Imports._
 
@@ -12,7 +11,7 @@ import com.github.nscala_time.time.Imports._
   * @author duytd
   */
 class Downloader {
-  def start: Unit = {
+  def run(): Unit = {
     while(true){
       val freshUrls = UrlDAO.find(MongoDBObject("downloaded"->false))
       this.download(freshUrls)
@@ -26,7 +25,7 @@ class Downloader {
   }
 }
 
-/** Factory for [[models.Downloader]] instances. */
+/** Factory for [[com.portia.models.Downloader]] instances. */
 object Downloader {
   def download(url:Url): Unit = {
     try {
@@ -40,10 +39,13 @@ object Downloader {
       UrlDAO.update(MongoDBObject("_id"->url._id), updateUrl, upsert = false, multi = false, new WriteConcern)
 
       // Save content to the database
-      val trainData = new TrainData
-      val documentObj = new Document(urlId = url._id, content = doc.toString,
-                                      categoryId = trainData.assignCategoryToDoc(url.absPath))
+      val documentObj = new Document(urlId = url._id, content = doc.toString)
       DocumentDAO.insert(documentObj)
+
+      // Tokenize document
+      val lang = Url.getLang(url.rootUrl)
+      val tokenizer = new Tokenizer(lang = lang)
+      tokenizer.tokenizeDoc(documentObj)
 
       println("Finish downloading " + updateUrl.toString)
     }

@@ -1,4 +1,4 @@
-package models
+package com.portia.models
 
 import java.io.StringReader
 import com.mongodb.WriteConcern
@@ -25,13 +25,10 @@ class Tokenizer(lang:String = "en") {
   // load stop words
   loadStopWords()
 
-  def tokenizeDocs(documents: Array[Document]):Unit = {
-
-    documents.foreach(doc => {
-      var tokens = new ArrayList[String]
-      tokens = tokenize(Jsoup.parse(doc.content).text())
-      saveTokensToDB(doc, tokens)
-    })
+  def tokenizeDoc(document: Document):Unit = {
+    var tokens = new ArrayList[String]
+    tokens = tokenize(Jsoup.parse(document.content).text())
+    saveTokensToDB(document, tokens)
   }
 
   private def loadStopWords(): Unit ={

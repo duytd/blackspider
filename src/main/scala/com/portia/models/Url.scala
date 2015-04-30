@@ -1,9 +1,10 @@
-package models
+package com.portia.models
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatDAO
 import com.mongodb.casbah.Imports.ObjectId
 import com.novus.salat.global._
+import com.portia.config.Constants
 
 /**
  * Single web node
@@ -82,5 +83,14 @@ object Url {
     UrlDAO.insert(normalizedUrlObj)
     println("Crawled "+normalizedUrl)
     normalizedUrlObj
+  }
+
+  def getLang(rootUrl:String):String = {
+    Constants.TARGET_URLS.foreach(item => {
+      if (item._1 == rootUrl) {
+        return item._3
+      }
+    })
+    "en"
   }
 }

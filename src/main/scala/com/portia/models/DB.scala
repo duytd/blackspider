@@ -1,4 +1,4 @@
-package models
+package com.portia.models
 
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 

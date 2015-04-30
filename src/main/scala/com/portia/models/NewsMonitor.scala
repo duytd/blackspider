@@ -1,4 +1,4 @@
-import models._
+package com.portia.models
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import com.mongodb.casbah.Imports.ObjectId
@@ -13,7 +13,7 @@ import com.mongodb.casbah.Imports.ObjectId
 class NewsMonitor(val rssSource:String, val rootUrl:String) {
   var rssSet:Set[String] = Set()
 
-  def monitor(): Unit = {
+  def run(): Unit = {
     try {
       val rssCategories = this.getRssCategories()
       rssCategories.foreach(category=> {

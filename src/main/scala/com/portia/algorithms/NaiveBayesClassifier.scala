@@ -1,87 +1,101 @@
 package com.portia.algorithms
 
-import java.util
-
-import com.mongodb.casbah.commons.MongoDBObject
-import models._
-import org.jsoup.Jsoup
-
-import scala.collection.mutable.ArrayBuffer
-
+import com.portia.models._
 import com.portia.models.{CategoryDAO, TokenScoreDAO, TokenScore, Category}
+import java.util.ArrayList
+import scala.collection.mutable.ArrayBuffer
+import org.jsoup.Jsoup
+import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.Imports.ObjectId
 
 /**
  * @author qmha
  */
 class NaiveBayesClassifier {
+  val EXAMPLES_LIMIT_SIZE = 10000
   var examples:Array[Document] = getExamples()
   var vocabulary:Array[Token] = getVocabulary
   var categories:Array[Category] = getCategories()
+  val PvjFilePath = "/docs/Pvj.txt"
 
-  def classifyNBC(document: String): Category = {
+  def classifyNBC(text: String): Category = {
     var VNB:ArrayBuffer[(Category, Double)]= new ArrayBuffer[(Category, Double)]()
     val tokenizer = new Tokenizer
-    val tokens:util.ArrayList[String] = tokenizer.tokenize(Jsoup.parse(document).text())
+    val tokens:ArrayList[String] = tokenizer.tokenize(Jsoup.parse(text).text())
 
     categories.foreach(category => {
       var v_j:Double = 1
-      val doc_j = Document.getDocumentsByCategory(category._id)
-      val P_vj:Double = doc_j.size.toDouble / examples.size.toDouble
+      val P_vj = category.Pvj
 
-      for (i <- 0 until tokens.size()) {
-        // find this token
-        val token = TokenDAO.findOne(MongoDBObject("name"->tokens.get(i)))
-        if (token != None) {
-          // get this score
-          val score = TokenScoreDAO.findOne(
-            MongoDBObject("$and"->(MongoDBObject("tokenId"->token.get._id), MongoDBObject("categoryId"->category._id)))).get
+      if (P_vj == -1.0) {
+        println("Please train the example data set first before classifying !")
+        return null
+      }
+      else {
+        println("Examining category:" + category.name)
 
-          v_j = v_j.toDouble * score.score.toDouble
-
-          println("Classifying token:" + token.get.name + ", with score:" + score.score)
+        for (i <- 0 until tokens.size()) {
+          // find this token
+          val token = TokenDAO.findOne(MongoDBObject("name"->tokens.get(i)))
+          if (token != None) {
+            // get this score
+            val score = TokenScoreDAO.findOne(
+              MongoDBObject("$and"->(MongoDBObject("tokenId"->token.get._id), MongoDBObject("categoryId"->category._id)))).get
+            v_j = v_j * score.score
+          }
         }
+
+        v_j = v_j * P_vj
+
+        println("Score of category " + category.name + ": " + v_j)
+
+        // Save
+        VNB += ((category, v_j))
       }
 
-      v_j = v_j * P_vj
-
-      println("Score of category " + category.name + ": " + v_j)
-
-      // Save
-      VNB += ((category, v_j))
     })
 
     // Return max
-    VNB.sortWith(_._2 >= _._2)(0)._1
+    VNB.sortWith(_._2 >= _._2).head._1
   }
 
-  def learnNaiveBayesText:Unit = {
+  def learnNaiveBayesText() = {
     // For each category
     categories.foreach(category => {
       var doc_j = Document.getDocumentsByCategory(category._id)
-      var P_vj:Double = doc_j.size.toDouble / examples.size.toDouble
+      var P_vj: Double = doc_j.length.toDouble / examples.length.toDouble
+
+      val updatedCategory = category.copy(Pvj = P_vj)
+      Category.update(category._id, updatedCategory)
+
       var Text_j = concatenateDocumentByCategory(doc_j)
       var n = Text_j.distinct.size
 
-      //println("Category :" + category.name + " has " + doc_j.size + " documents")
-      //println("Examples = " + examples.size + ". Vocab = " + vocabulary.size + ". Total Tokens:" + Text_j.size + ". Distinct: " + n + ". P_vj = " + P_vj)
+      println("Training category :" + category.name + " has " + doc_j.length + " documents")
 
       vocabulary.foreach(wk => {
         val n_k = Text_j.count(_ == wk)
-        //Text_j.foreach(item => {print(item + " ")})
-        var ct:Int = 0
-        val P:Double = (n_k + 1).toDouble / (n + vocabulary.size).toDouble
-
-        //println("V = " + vocabulary.size + ". NK = " + n_k)
-
-        println("Training token: " + wk.name + " with score: " + P)
+        var ct: Int = 0
+        val P: Double = (n_k + 1).toDouble / (n + vocabulary.length).toDouble
         // Insert into database
-        insertIntoDatabase(wk._id, category._id, P)
+        if (!TokenScore.existedTokenScore(wk._id, category._id)) {
+          saveTokenScoreToDB(wk._id, category._id, P)
+        }
       })
     })
   }
 
-  def insertIntoDatabase(tokenId: ObjectId, categoryId: ObjectId, score: Double) = {
+  def classifyPageByUrl(url:String): Category = {
+    val document = Jsoup.connect(url).get().body().text()
+    val result = this.classifyNBC(document)
+    result
+  }
+
+  def classifyDoc(doc: Document): Category = {
+    this.classifyNBC(doc.content)
+  }
+
+  def saveTokenScoreToDB(tokenId: ObjectId, categoryId: ObjectId, score: Double) = {
     val tokenScore = new TokenScore(tokenId = tokenId, categoryId = categoryId, score = score)
     TokenScoreDAO.insert(tokenScore)
   }
@@ -102,7 +116,7 @@ class NaiveBayesClassifier {
   }
 
   def getExamples():Array[Document] = {
-    DocumentDAO.find(MongoDBObject.empty).toArray
+    DocumentDAO.find(MongoDBObject.empty).limit(EXAMPLES_LIMIT_SIZE).toArray
   }
 
   def getCategories():Array[Category] = {
