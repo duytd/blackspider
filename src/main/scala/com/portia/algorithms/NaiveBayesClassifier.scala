@@ -47,7 +47,7 @@ class NaiveBayesClassifier {
             println(v_j)
             return null
             if (Math.abs(Math.log10(tokenScore.score)) < 12)
-              v_j = v_j * tokenScore.score
+              v_j = v_j * Math.log10(tokenScore.score)
           }
         }
 
