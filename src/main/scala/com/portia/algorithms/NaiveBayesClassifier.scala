@@ -46,7 +46,8 @@ class NaiveBayesClassifier {
                 MongoDBObject("categoryId"->category._id)))).get
             println(v_j)
             return null
-            v_j = v_j * tokenScore.score
+            if (Math.abs(Math.log10(tokenScore.score)) < 12)
+              v_j = v_j * tokenScore.score
           }
         }
 
