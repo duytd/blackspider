@@ -26,7 +26,7 @@ class NaiveBayesClassifier {
     val tokens:ArrayList[String] = tokenizer.tokenize(Jsoup.parse(text).text())
 
     categories.foreach(category => {
-      var v_j:Double = 1
+      var v_j:Double = 0
       val P_vj:Double = category.Pvj
 
       if (P_vj == -1.0) {
@@ -46,13 +46,12 @@ class NaiveBayesClassifier {
                 MongoDBObject("categoryId"->category._id)))).get
             println(v_j)
             return null
-            if (Math.abs(Math.log10(tokenScore.score)) < 12)
-              v_j = v_j * Math.log10(tokenScore.score)
+            v_j = v_j + Math.log10(tokenScore.score)
           }
         }
 
         println(P_vj.toDouble+" "+v_j)
-        v_j = v_j * P_vj
+        v_j = v_j + Math.log10(P_vj)
 
         println("Score of category " + category.name + ": " + v_j)
 
