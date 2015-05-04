@@ -9,9 +9,11 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.Imports.ObjectId
 
 /**
+ * Implement Naive Bayes Algorithm to classify web documents
  * @author qmha
  */
 class NaiveBayesClassifier {
+  /* Examples is the set of first 10000 pages in the database*/
   val EXAMPLES_LIMIT_SIZE = 10000
   var examples:Array[Document] = getExamples()
   var vocabulary:Array[Token] = getVocabulary
@@ -25,7 +27,7 @@ class NaiveBayesClassifier {
 
     categories.foreach(category => {
       var v_j:Double = 1
-      val P_vj = category.Pvj
+      val P_vj:Double = category.Pvj
 
       if (P_vj == -1.0) {
         println("Please train the example data set first before classifying !")
@@ -39,12 +41,16 @@ class NaiveBayesClassifier {
           val token = TokenDAO.findOne(MongoDBObject("name"->tokens.get(i)))
           if (token != None) {
             // get this score
-            val score = TokenScoreDAO.findOne(
-              MongoDBObject("$and"->(MongoDBObject("tokenId"->token.get._id), MongoDBObject("categoryId"->category._id)))).get
-            v_j = v_j * score.score
+            val tokenScore = TokenScoreDAO.findOne(
+              MongoDBObject("$and"->(MongoDBObject("tokenId"->token.get._id),
+                MongoDBObject("categoryId"->category._id)))).get
+            println(v_j)
+            return null
+            v_j = v_j * tokenScore.score
           }
         }
 
+        println(P_vj.toDouble+" "+v_j)
         v_j = v_j * P_vj
 
         println("Score of category " + category.name + ": " + v_j)
@@ -62,14 +68,14 @@ class NaiveBayesClassifier {
   def learnNaiveBayesText() = {
     // For each category
     categories.foreach(category => {
-      var doc_j = Document.getDocumentsByCategory(category._id)
-      var P_vj: Double = doc_j.length.toDouble / examples.length.toDouble
+      val doc_j = Document.getDocumentsByCategory(category._id)
+      val P_vj: Double = doc_j.length.toDouble / examples.length.toDouble
 
       val updatedCategory = category.copy(Pvj = P_vj)
       Category.update(category._id, updatedCategory)
 
-      var Text_j = concatenateDocumentByCategory(doc_j)
-      var n = Text_j.distinct.size
+      val Text_j = concatenateDocumentByCategory(doc_j)
+      val n = Text_j.distinct.size
 
       println("Training category :" + category.name + " has " + doc_j.length + " documents")
 
@@ -86,6 +92,7 @@ class NaiveBayesClassifier {
   }
 
   def classifyPageByUrl(url:String): Category = {
+    println("Testing url "+url)
     val document = Jsoup.connect(url).get().body().text()
     val result = this.classifyNBC(document)
     result

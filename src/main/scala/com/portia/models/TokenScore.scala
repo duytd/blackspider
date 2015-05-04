@@ -5,6 +5,7 @@ import com.novus.salat.dao.SalatDAO
 import com.novus.salat.global._
 
 /**
+ * Score of each distinct token in each category
  * @author duytd
  */
 case class TokenScore(_id: ObjectId = new ObjectId, tokenId: ObjectId, categoryId: ObjectId, score: Double)
