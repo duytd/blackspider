@@ -10,7 +10,6 @@ import com.mongodb.casbah.Imports._
  * @author qmha
  */
 class DataTrainer {
-  val EXAMPLES_LIMIT_SIZE = 10000
   val categoryFilePath = "/docs/categories.txt"
   buildCategory()
 
@@ -27,22 +26,27 @@ class DataTrainer {
 
   def run(): Unit = {
     val nbc:NaiveBayesClassifier = new NaiveBayesClassifier
-    //normalize Token
+
+    //Tokenize all categorized docs
+    val tokenizer = new Tokenizer()
+    tokenizer.tokenizeMultiDocs(Document.getCategorizedDocs())
+
+    // Normalize Token
     this.normalizeToken()
 
-    //assign category
-    //assignCategoryToExamples()
+    // Assign category
+    assignCategoryToExamples()
 
-    //learn
+    // Learn
     nbc.learnNaiveBayesText()
   }
 
   def normalizeToken(): Unit = {
     println("Start normalizing token...")
     val tokens = Token.findAll().toArray
-    //remove token if it is not a word
+    //remove token if it is not a word or it has single character
     tokens.foreach(token => {
-      if (!isWord(token.name)) {
+      if (!isWord(token.name) || token.name.length == 1) {
         TokenDAO.remove(token)
       }
     })
@@ -59,13 +63,16 @@ class DataTrainer {
   }
 
   def assignCategoryToExamples(): Unit = {
-    val examples = DocumentDAO.find(MongoDBObject.empty).limit(EXAMPLES_LIMIT_SIZE)
+    val examples = DocumentDAO.find(MongoDBObject.empty)
+    var d_count = 0
+    val e_size = examples.length
     examples.foreach(doc => {
       val category = getCategoryByURL(doc.url.absPath)
       if (category != null) {
         val newDoc = doc.copy(categoryId = category._id)
         DocumentDAO.update(MongoDBObject("_id"->doc._id), newDoc, upsert = false, multi = false, new WriteConcern)
-        println("Assigned "+doc.url.absPath+" to "+category.name)
+        d_count = d_count + 1
+        print("Processing "+d_count+"/"+e_size+"\r")
       }
     })
   }

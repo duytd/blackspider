@@ -31,6 +31,18 @@ class Tokenizer(lang:String = "en") {
     saveTokensToDB(document, tokens)
   }
 
+  def tokenizeMultiDocs(documents: Array[Document]):Unit = {
+    var count = 0
+    val size = documents.length
+    println("Tokenizing docs...")
+    documents.foreach(doc => {
+      tokenizeDoc(doc)
+      count = count+1
+      print("Processing: "+ count+"/"+size+"\r")
+    })
+    println("\n Finish tokenizing docs...")
+  }
+
   private def loadStopWords(): Unit ={
     for (word <- Source.fromURL(getClass.getResource(this.filePath), "UTF-8").getLines()) {
       if (this.lang == "vi") {
@@ -53,7 +65,6 @@ class Tokenizer(lang:String = "en") {
       if (!Token.existedToken(tokenName.toString)) {
         val tokenObj = new Token(name = tokenName.toString)
         TokenDAO.insert(tokenObj)
-        println("Inserted token: " + tokenName)
       }
     })
 

@@ -21,4 +21,8 @@ object Document {
   def getDocumentsByCategory(_id: ObjectId):Array[Document] = {
     DocumentDAO.find(MongoDBObject("categoryId" -> _id)).toArray
   }
+
+  def getCategorizedDocs(): Array[Document] ={
+    DocumentDAO.find(MongoDBObject("categoryId"->MongoDBObject("$ne"->None))).toArray
+  }
 }

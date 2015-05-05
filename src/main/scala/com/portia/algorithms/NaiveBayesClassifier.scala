@@ -14,7 +14,6 @@ import com.mongodb.casbah.Imports.ObjectId
  */
 class NaiveBayesClassifier {
   /* Examples is the set of first 10000 pages in the database*/
-  val EXAMPLES_LIMIT_SIZE = 10000
   var examples:Array[Document] = getExamples()
   var vocabulary:Array[Token] = getVocabulary
   var categories:Array[Category] = getCategories()
@@ -44,13 +43,10 @@ class NaiveBayesClassifier {
             val tokenScore = TokenScoreDAO.findOne(
               MongoDBObject("$and"->(MongoDBObject("tokenId"->token.get._id),
                 MongoDBObject("categoryId"->category._id)))).get
-            println(v_j)
-            return null
             v_j = v_j + Math.log10(tokenScore.score)
           }
         }
 
-        println(P_vj.toDouble+" "+v_j)
         v_j = v_j + Math.log10(P_vj)
 
         println("Score of category " + category.name + ": " + v_j)
@@ -76,14 +72,17 @@ class NaiveBayesClassifier {
 
       val Text_j = concatenateDocumentByCategory(doc_j)
       val n = Text_j.distinct.size
+      var t_count = 0
+      val v_size = vocabulary.length
 
       println("Training category :" + category.name + " has " + doc_j.length + " documents")
-
       vocabulary.foreach(wk => {
         val n_k = Text_j.count(_ == wk)
-        var ct: Int = 0
         val P: Double = (n_k + 1).toDouble / (n + vocabulary.length).toDouble
         // Insert into database
+        t_count = t_count + 1
+        print("Token: "+t_count+"/"+v_size+"\r")
+
         if (!TokenScore.existedTokenScore(wk._id, category._id)) {
           saveTokenScoreToDB(wk._id, category._id, P)
         }
@@ -123,7 +122,7 @@ class NaiveBayesClassifier {
   }
 
   def getExamples():Array[Document] = {
-    DocumentDAO.find(MongoDBObject.empty).limit(EXAMPLES_LIMIT_SIZE).toArray
+    DocumentDAO.find(MongoDBObject("categoryId"->MongoDBObject("$ne"->None))).toArray
   }
 
   def getCategories():Array[Category] = {
