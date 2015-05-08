@@ -1,3 +1,4 @@
+package com.portia
 import com.portia.config.Constants
 import com.portia.models.NewsMonitor
 /**

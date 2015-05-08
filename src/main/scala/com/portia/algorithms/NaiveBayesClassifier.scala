@@ -2,7 +2,6 @@ package com.portia.algorithms
 
 import com.portia.models._
 import com.portia.models.{CategoryDAO, TokenScoreDAO, TokenScore, Category}
-import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import org.jsoup.Jsoup
 import com.mongodb.casbah.commons.MongoDBObject
@@ -14,7 +13,7 @@ import com.mongodb.casbah.Imports.ObjectId
  */
 class NaiveBayesClassifier {
   /* Examples is the set of first 10000 pages in the database*/
-  var examples:Array[Document] = getExamples()
+  var examples:Array[TrainingUrl] = getExamples()
   var vocabulary:Array[Token] = getVocabulary
   var categories:Array[Category] = getCategories()
   val PvjFilePath = "/docs/Pvj.txt"
@@ -22,9 +21,9 @@ class NaiveBayesClassifier {
   def classifyNBC(text: String): Category = {
     var VNB:ArrayBuffer[(Category, Double)]= new ArrayBuffer[(Category, Double)]()
     val tokenizer = new Tokenizer
-    val tokens:ArrayList[String] = tokenizer.tokenize(Jsoup.parse(text).text())
+    val tokens:ArrayBuffer[String] = tokenizer.tokenize(Jsoup.parse(text).text())
 
-    categories.foreach(category => {
+    categories.par.foreach(category => {
       var v_j:Double = 0
       val P_vj:Double = category.Pvj
 
@@ -35,9 +34,9 @@ class NaiveBayesClassifier {
       else {
         println("Examining category:" + category.name)
 
-        for (i <- 0 until tokens.size()) {
+        tokens.par.foreach(tokenName => {
           // find this token
-          val token = TokenDAO.findOne(MongoDBObject("name"->tokens.get(i)))
+          val token = TokenDAO.findOne(MongoDBObject("name"->tokenName))
           if (token != None) {
             // get this score
             val tokenScore = TokenScoreDAO.findOne(
@@ -45,7 +44,7 @@ class NaiveBayesClassifier {
                 MongoDBObject("categoryId"->category._id)))).get
             v_j = v_j + Math.log10(tokenScore.score)
           }
-        }
+        })
 
         v_j = v_j + Math.log10(P_vj)
 
@@ -63,21 +62,22 @@ class NaiveBayesClassifier {
 
   def learnNaiveBayesText() = {
     // For each category
-    categories.foreach(category => {
-      val doc_j = Document.getDocumentsByCategory(category._id)
+    categories.par.foreach(category => {
+      val doc_j:Array[TrainingUrl] = TrainingUrl.getTrainingDataByCategory(category._id)
       val P_vj: Double = doc_j.length.toDouble / examples.length.toDouble
 
       val updatedCategory = category.copy(Pvj = P_vj)
       Category.update(category._id, updatedCategory)
 
-      val Text_j = concatenateDocumentByCategory(doc_j)
-      val n = Text_j.distinct.size
+      val Text_j: ArrayBuffer[String] = concatenateTrainingDataByCategory(doc_j)
+      val n = Text_j.size
       var t_count = 0
       val v_size = vocabulary.length
 
       println("Training category :" + category.name + " has " + doc_j.length + " documents")
-      vocabulary.foreach(wk => {
-        val n_k = Text_j.count(_ == wk)
+      vocabulary.par.foreach(wk => {
+        val n_k = Text_j.count(_ == wk.name)
+
         val P: Double = (n_k + 1).toDouble / (n + vocabulary.length).toDouble
         // Insert into database
         t_count = t_count + 1
@@ -106,12 +106,12 @@ class NaiveBayesClassifier {
     TokenScoreDAO.insert(tokenScore)
   }
 
-  def concatenateDocumentByCategory(documents: Array[Document]):ArrayBuffer[String] = {
+  def concatenateTrainingDataByCategory(trainingData: Array[TrainingUrl]):ArrayBuffer[String] = {
     var result:ArrayBuffer[String] = new ArrayBuffer[String]()
     val tokenizer = new Tokenizer()
-    documents.foreach(doc=>{
-      tokenizer.tokenize(Jsoup.parse(doc.content).text()).toArray.foreach(item => {
-        result += item.toString
+    trainingData.par.foreach(data =>{
+      tokenizer.tokenize(Jsoup.parse(data.document.content).text()).toArray.foreach(item => {
+        result += item
       })
     })
     result
@@ -121,8 +121,8 @@ class NaiveBayesClassifier {
     TokenDAO.find(MongoDBObject.empty).toArray
   }
 
-  def getExamples():Array[Document] = {
-    DocumentDAO.find(MongoDBObject("categoryId"->MongoDBObject("$ne"->None))).toArray
+  def getExamples():Array[TrainingUrl] = {
+    TrainingUrlDAO.find(MongoDBObject.empty).toArray
   }
 
   def getCategories():Array[Category] = {

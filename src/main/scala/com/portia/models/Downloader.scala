@@ -4,6 +4,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatMongoCursor
 import org.jsoup.Jsoup
+import com.mongodb.casbah.Imports.ObjectId
 import com.github.nscala_time.time.Imports._
 
 /** A dummy downloader which has a simple job of downloading content of crawled web nodes
@@ -29,25 +30,10 @@ class Downloader {
 object Downloader {
   def download(url:Url): Unit = {
     try {
-      // Get the HTML body content
-      val doc = Jsoup.connect(url.absPath).get.body()
-
       println("Downloading " + url.absPath + "...")
-
-      // Mark as downloaded
-      val updateUrl = url.copy(downloaded = true, parseTime = DateTime.now.toString)
-      UrlDAO.update(MongoDBObject("_id"->url._id), updateUrl, upsert = false, multi = false, new WriteConcern)
-
-      // Save content to the database
-      val documentObj = new Document(urlId = url._id, content = doc.toString)
-      DocumentDAO.insert(documentObj)
-
-      // Tokenize document
-      val lang = Url.getLang(url.rootUrl)
-      val tokenizer = new Tokenizer(lang = lang)
-      tokenizer.tokenizeDoc(documentObj)
-
-      println("Finish downloading " + updateUrl.toString)
+      // Get the HTML body content
+      saveDocByURL(url)
+      println("Finish downloading " + url.absPath)
     }
 
     catch {
@@ -55,5 +41,16 @@ object Downloader {
         val updateUrl = url.copy(downloaded = false)
         UrlDAO.update(MongoDBObject("_id"->url._id), updateUrl, upsert = false, multi = false, new WriteConcern)
     }
+  }
+
+  def saveDocByURL(url: Url): Unit = {
+    val doc = Jsoup.connect(url.absPath).get.body()
+    // Mark as downloaded
+    val updateUrl = url.copy(downloaded = true, parseTime = DateTime.now.toString)
+    UrlDAO.update(MongoDBObject("_id"->url._id), updateUrl, upsert = false, multi = false, new WriteConcern)
+
+    // Save content to the database
+    val documentObj = new Document(urlId = url._id, content = doc.toString)
+    DocumentDAO.insert(documentObj)
   }
 }

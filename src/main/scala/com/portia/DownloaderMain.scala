@@ -1,5 +1,5 @@
-import com.portia.models.{Document, Downloader}
-import org.jsoup.Jsoup
+package com.portia
+import com.portia.models.{Downloader}
 
 /**
  * Downloader main program

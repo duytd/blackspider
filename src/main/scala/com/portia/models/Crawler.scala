@@ -44,8 +44,9 @@ class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
       this.removeQueueItem(url._1)
 
       // Save this to DB if not exists
-      if (!Url.existedUrl(url._2))
+      if (!Url.existedUrl(url._2)) {
         Url.saveUrlToDB(url._1, url._2, rootUrl)
+      }
 
       // Get all children of the node
       val children = Crawler.fetchChildrenUrls(url._2)
@@ -55,19 +56,19 @@ class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
         val newChild = anchor.asInstanceOf[Element].attr("href")
         val normalizedNewChild = Url.normalizeUrl(newChild,rootUrl)
 
-        if (Url.isValid(newChild, rootUrl) && !existedQueueItem(normalizedNewChild)) {
+        if (Url.isValid(newChild, rootUrl) && !existedQueueItem(normalizedNewChild)
+          && !Url.existedUrl(normalizedNewChild)) {
           // Enqueue the child node
           val newQueueItem:(ObjectId, String) = (new ObjectId, normalizedNewChild)
           urlQueue += newQueueItem
           Crawler.insertQueueItem(newQueueItem, rootUrl)
 
-          if (!Url.existedUrl(normalizedNewChild)) {
-            // Save the node to the database
-            Url.saveUrlToDB(newQueueItem._1, newQueueItem._2, rootUrl)
+          // Save the node to the database
+          Url.saveUrlToDB(newQueueItem._1, newQueueItem._2, rootUrl)
 
-            // With each child, build the edge with its parent and save to database
-            Edge.buildEdge(newQueueItem._1, url._1)
-          }
+          // With each child, build the edge with its parent and save to database
+          Edge.buildEdge(newQueueItem._1, url._1)
+
         }
       }
     }

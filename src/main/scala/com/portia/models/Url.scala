@@ -10,14 +10,14 @@ import com.portia.config.Constants
  * Single web node
  * @author duytd
  */
-case class Url (_id: ObjectId = new ObjectId, absPath:String = "", rootUrl:String = "", downloaded:Boolean = false, parseTime:String = null, pageRank:Double = 1.0)
+case class Url (_id: ObjectId = new ObjectId, absPath:String = "", rootUrl:String = "", downloaded:Boolean = false, parseTime:String = null, pageRank:Double = 1.0, tokenized:Boolean = false)
 
 object UrlDAO extends SalatDAO[Url, ObjectId](
   collection = DB.mongoDB("urls"))
 
 object Url {
   def isValid(url:String, rootUrl:String, force:Boolean = false): Boolean = {
-    !isSpecialUrl(url) && !isRootUrl(url, rootUrl) && (belongsToRootUrl(url, rootUrl) || !isAbsoluteUrl(url))
+    !isSpecialUrl(url) && !isImageLink(url) && !isRootUrl(url, rootUrl) && (belongsToRootUrl(url, rootUrl) || !isAbsoluteUrl(url))
   }
 
   def isAbsoluteUrl(url:String): Boolean = {
@@ -40,7 +40,11 @@ object Url {
   /* A function to check special url: rss url, hash, e-mail, telephone url and javascript */
   def isSpecialUrl(url:String):Boolean = {
     url.startsWith("#") || url.contains("rss") || url.contains("mailto")  ||
-      url.contains("tel:") || url.contains("javascript")
+      url.contains("tel:") || url.contains("javascript") || url.contains("tag")
+  }
+
+  def isImageLink(url:String):Boolean = {
+    url.contains(".png") || url.contains(".jpeg") || url.contains(".jpg") || url.contains(".gif")
   }
 
   /* A function to remove http(s) protocol and www hostname */
@@ -52,7 +56,7 @@ object Url {
   def normalizeUrl(url:String, rootUrl:String): String = {
     var initialUrl = Url.removePrefixesFromUrl(url)
 
-    if (initialUrl.last == '/' || initialUrl.last == '#') {
+    if (initialUrl.last == '#') {
       initialUrl = initialUrl.dropRight(1)
     }
 
@@ -81,7 +85,11 @@ object Url {
     val normalizedUrl = Url.normalizeUrl(url, rootUrl)
     val normalizedUrlObj = new Url(_id = uid, absPath = normalizedUrl, rootUrl = rootUrl)
     UrlDAO.insert(normalizedUrlObj)
+
+    //download content
+    Downloader.saveDocByURL(normalizedUrlObj)
     println("Crawled "+normalizedUrl)
+
     normalizedUrlObj
   }
 

@@ -1,13 +1,10 @@
-world | Thế giới | the-gioi, dong-a, eu-nga, chau-my, diem-nong
-social | Xã hội | xa-hoi, viec-lam, tam-long-nhan-ai, giao-thong, moi-truong, chinh-tri
-culture | Văn hóa | van-hoa, san-khau, van-hoc, dien-anh
-economy | Kinh tế | kinh-doanh, thi-truong, doanh-nghiep, nha-dat, gia-ca
-tech | KH-CN | suc-manh-so, may-tinh, di-dong
-sport | Thể thao | the-thao, bong-da, tennis, co-vua
-entertainment | Giải trí | giai-tri, chuyen-la, xem-an-choi, sao-viet, hollywood, thoi-trang
-law | Pháp luật | phap-luat
-education | Giáo dục | giao-duc, tuyen-sinh, du-hoc, khoa-hoc
-health | Sức khỏe | suc-khoe, lam-dep, gioi-tinh
-transport | Ô tô - Xe máy | o-to-xe-may
-young | Giới trẻ | nhip-song-tre
-travel | Du lịch | dulich, du-lich
+world | World | /world/
+society | Society | /society/
+business | Business | /business/
+tech | Tech | /tech/
+sports | Sports | /sports/
+politics | Politics | /politics/
+travel | Travel | /travel/
+education | Education | /education-youth/
+health | Health | /health/
+art | Art/Culture | /arts-culture/

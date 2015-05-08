@@ -3,8 +3,10 @@ package com.portia.trainer
 import com.mongodb.casbah.commons.MongoDBObject
 import com.portia.algorithms.NaiveBayesClassifier
 import com.portia.models._
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import com.mongodb.casbah.Imports._
+
+import scala.util.Random
 
 /**
  * @author qmha
@@ -18,8 +20,9 @@ class DataTrainer {
       val category = line.split('|')
       val cAlias = category(0).trim
       val cName = category(1).trim
+      val cSlug = category(2).trim
       if (!Category.existedCategory(cAlias)) {
-        saveCategoryToDB(cAlias, cName)
+        saveCategoryToDB(cAlias, cName, cSlug)
       }
     }
   }
@@ -27,18 +30,148 @@ class DataTrainer {
   def run(): Unit = {
     val nbc:NaiveBayesClassifier = new NaiveBayesClassifier
 
-    //Tokenize all categorized docs
-    val tokenizer = new Tokenizer()
-    tokenizer.tokenizeMultiDocs(Document.getCategorizedDocs())
+    //Build training data set
+    if (TrainingUrlDAO.find(MongoDBObject.empty).isEmpty)
+      buildTrainingData()
 
-    // Normalize Token
-    this.normalizeToken()
+    //Build testing data set
+    if (TestingUrlDAO.find(MongoDBObject.empty).isEmpty)
+      buildTestingData()
 
-    // Assign category
-    assignCategoryToExamples()
+    //Build vocabulary tokens
+    if (TokenDAO.find(MongoDBObject.empty).isEmpty) {
+      val tokenizer = new Tokenizer()
+      val trainingDataSet = TrainingUrlDAO.find(MongoDBObject.empty).toArray
+      val tds_size = trainingDataSet.length
+      var t_count = 0
+      trainingDataSet.foreach(data => {
+        val doc = data.document
+        print("Tokenizing: "+t_count+"/"+tds_size+"\r")
+        tokenizer.tokenizeDoc(doc)
+        t_count = t_count + 1
+      })
+    }
 
     // Learn
-    nbc.learnNaiveBayesText()
+    if (TokenScoreDAO.find(MongoDBObject.empty).isEmpty)
+      nbc.learnNaiveBayesText()
+  }
+
+  def buildTestingData():Unit = {
+    println("Building testing dataset...")
+
+    val allCategories = CategoryDAO.find(MongoDBObject.empty)
+    allCategories.foreach(category => {
+      val urls = findTestingUrls(category)
+      urls.par.foreach(u => {
+        if (!TestingUrl.existedUrl(u._id)) {
+          val testingUrl = new TestingUrl(urlId = u._id, expectedResult = category._id)
+          TestingUrl.save(testingUrl)
+        }
+      })
+    })
+
+    println("Finish building testing dataset...")
+  }
+
+  def findTestingUrls(category: Category):ArrayBuffer[Url] = {
+    val allUrls = UrlDAO.find(MongoDBObject.empty)
+    var maxSize = 20
+    var arrayBuffer = new ArrayBuffer[Url]()
+    allUrls.foreach(url => {
+      // If number of urls exceeds 20 then return
+      if (maxSize == 0) {
+        return arrayBuffer
+      }
+
+      // If url does not belong to training set and
+      // belongs to current category then add it to array buffer
+      if (TrainingUrlDAO.find(MongoDBObject("urlId"->url._id)).isEmpty
+        && (determineCategoryByURL(url.absPath) == category.alias) && validTrainingUrl(url)) {
+        maxSize = maxSize - 1
+        arrayBuffer += url
+      }
+    })
+    arrayBuffer
+  }
+
+  def buildTrainingData(): Unit = {
+    val allUrls = UrlDAO.find(MongoDBObject.empty)
+    val allCategories = CategoryDAO.find(MongoDBObject.empty)
+    val docLimitSizes = new ArrayBuffer[(Category,Int)]()
+
+    //build limit sizes array
+    allCategories.foreach(cat => {
+      if (cat.alias == "education") {
+        docLimitSizes += ((cat, 300))
+      }
+      else {
+        docLimitSizes += ((cat, getRandom()))
+      }
+    })
+
+    allUrls.foreach(url => {
+      if (docLimitSizes.find(_._2 > 0).isEmpty)
+        return
+
+      val categoryAlias = determineCategoryByURL(url.absPath)
+      if (categoryAlias != null) {
+        val dls = docLimitSizes.find(_._1.alias == categoryAlias).get
+        val limit = dls._2
+        val index = docLimitSizes.indexOf(dls)
+
+        if (limit > 0) {
+          val category = Category.findByAlias(categoryAlias).get
+          val document = Document.getDocumentByUrl(url._id).get
+          val trainingUrl = new TrainingUrl(urlId = url._id, categoryId = category._id, docId = document._id)
+
+          // save to training set
+          if (!TrainingUrl.existedUrl(url._id) && validTrainingUrl(url))  {
+            TrainingUrl.save(trainingUrl)
+            println("Saved " +url.absPath+" - Category: "+category.name+" to training set")
+            // update limit size
+            docLimitSizes(index) = ((category, limit-1))
+          }
+        }
+      }
+    })
+  }
+
+  def validTrainingUrl(url: Url):Boolean = {
+    !url.absPath.contains("video") && !url.absPath.contains("hot.html") && !url.absPath.contains("latest.html") && !url.absPath.contains("photo")
+  }
+
+  def determineCategoryByURL(absPath:String): String = {
+    val urlPath = absPath
+    val categories = CategoryDAO.find(MongoDBObject.empty)
+    categories.foreach(category=>{
+      val slugs = category.slug.split(',')
+      if (containsSlug(urlPath, slugs)) {
+        return category.alias
+      }
+    })
+    null
+  }
+
+  def containsSlug(url:String, slugs:Array[String]):Boolean = {
+    slugs.foreach(slug => {
+      if (url.contains(slug.trim()))
+        return true
+    })
+    false
+  }
+
+  def saveCategoryToDB(alias:String, name:String, slug:String): Unit = {
+    val category =  new Category(alias = alias, name = name, slug = slug)
+    CategoryDAO.insert(category)
+    println("Created category: "+category.name)
+  }
+
+  def getRandom():Int = {
+    val r:Random = new Random()
+    val start = 275
+    val end = 285
+    r.nextInt(end-start) + start
   }
 
   def normalizeToken(): Unit = {
@@ -60,48 +193,5 @@ class DataTrainer {
       }
     })
     true
-  }
-
-  def assignCategoryToExamples(): Unit = {
-    val examples = DocumentDAO.find(MongoDBObject.empty)
-    var d_count = 0
-    val e_size = examples.length
-    examples.foreach(doc => {
-      val category = getCategoryByURL(doc.url.absPath)
-      if (category != null) {
-        val newDoc = doc.copy(categoryId = category._id)
-        DocumentDAO.update(MongoDBObject("_id"->doc._id), newDoc, upsert = false, multi = false, new WriteConcern)
-        d_count = d_count + 1
-        print("Processing "+d_count+"/"+e_size+"\r")
-      }
-    })
-  }
-
-  def getCategoryByURL(absPath:String): Category = {
-    val urlPath = absPath
-    for (line <- Source.fromURL(getClass.getResource(this.categoryFilePath), "UTF-8").getLines()) {
-      val category = line.split('|')
-      val slugs = category(2).split(',')
-      if (containsSlug(urlPath, slugs)) {
-        val cAlias = category(0).trim
-        val categoryObj = Category.findByAlias(cAlias).get
-        return categoryObj
-      }
-    }
-    null
-  }
-
-  def containsSlug(url:String, slugs:Array[String]):Boolean = {
-    slugs.foreach(slug => {
-      if (url.contains(slug.trim()))
-        return true
-    })
-    false
-  }
-
-  def saveCategoryToDB(alias:String, name:String): Unit = {
-    val category =  new Category(alias = alias, name = name)
-    CategoryDAO.insert(category)
-    println("Created category: "+category.name)
   }
 }

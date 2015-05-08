@@ -1,3 +1,5 @@
+package com.portia
+
 import com.portia.models.Crawler
 import com.portia.models.{DBQueueDAO}
 import com.portia.config.Constants

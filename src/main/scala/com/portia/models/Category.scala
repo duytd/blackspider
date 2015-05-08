@@ -9,7 +9,7 @@ import com.novus.salat.global._
 /**
  * @author qmha
  */
-case class Category(_id: ObjectId = new ObjectId, alias:String, name:String, parentId:ObjectId = new ObjectId, Pvj:Double = -1.0)
+case class Category(_id: ObjectId = new ObjectId, alias:String, slug:String, name:String, parentId:ObjectId = new ObjectId, Pvj:Double = -1.0)
 
 object CategoryDAO extends SalatDAO[Category, ObjectId](
   collection = DB.mongoDB("categories"))

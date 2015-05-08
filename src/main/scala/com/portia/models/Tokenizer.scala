@@ -3,13 +3,12 @@ package com.portia.models
 import java.io.StringReader
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
+import com.portia.analyzer.PortiaAnalyzer
 import org.apache.lucene.analysis._
-import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
-import org.apache.lucene.analysis.util.CharArraySet
 import org.apache.lucene.util.Version
-import java.util.ArrayList
 import org.jsoup.Jsoup
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 /**
@@ -17,7 +16,7 @@ import scala.io.Source
  * @author duytd
  */
 class Tokenizer(lang:String = "en") {
-  var STOP_WORDS = new CharArraySet(Version.LATEST, 0, true)
+  var STOP_WORDS = new CharArraySet(Version.LUCENE_30, 0, true)
   val viStopWordsFile = "/stop_words/vietnamese_stopwords.txt"
   val enStopWordsFile = "/stop_words/english_stopwords.txt"
   val filePath = if (lang == "vi") viStopWordsFile else enStopWordsFile
@@ -26,21 +25,21 @@ class Tokenizer(lang:String = "en") {
   loadStopWords()
 
   def tokenizeDoc(document: Document):Unit = {
-    var tokens = new ArrayList[String]
+    var tokens = new ArrayBuffer[String]
     tokens = tokenize(Jsoup.parse(document.content).text())
     saveTokensToDB(document, tokens)
   }
 
   def tokenizeMultiDocs(documents: Array[Document]):Unit = {
     var count = 0
-    val size = documents.length
+    val d_size = documents.length
     println("Tokenizing docs...")
     documents.foreach(doc => {
       tokenizeDoc(doc)
       count = count+1
-      print("Processing: "+ count+"/"+size+"\r")
+      print("Processing: "+ count+"/"+d_size+"\r")
     })
-    println("\n Finish tokenizing docs...")
+    println("\nFinish tokenizing docs...")
   }
 
   private def loadStopWords(): Unit ={
@@ -55,13 +54,13 @@ class Tokenizer(lang:String = "en") {
   }
 
   /* Method to tokenize English document using Standard Analyzer (Lucene) */
-  def tokenize(text:String): ArrayList[String] = {
-    val analyzer = new StandardAnalyzer()
+  def tokenize(text:String): ArrayBuffer[String] = {
+    val analyzer = new PortiaAnalyzer(STOP_WORDS)
     getTokens(analyzer, text)
   }
 
-  private def saveTokensToDB(document: Document, tokenNames:ArrayList[String]): Unit ={
-    tokenNames.toArray.foreach(tokenName => {
+  private def saveTokensToDB(document: Document, tokenNames:ArrayBuffer[String]): Unit ={
+    tokenNames.par.foreach(tokenName => {
       if (!Token.existedToken(tokenName.toString)) {
         val tokenObj = new Token(name = tokenName.toString)
         TokenDAO.insert(tokenObj)
@@ -73,13 +72,13 @@ class Tokenizer(lang:String = "en") {
     DocumentDAO.update(MongoDBObject("_id"->document._id), updatedDoc, upsert = false, multi = false, new WriteConcern)
   }
 
-  private def getTokens(analyzer: Analyzer, document: String): ArrayList[String] = {
+  private def getTokens(analyzer: Analyzer, document: String): ArrayBuffer[String] = {
     val stream  = analyzer.tokenStream(null, new StringReader(document))
-    val tokens = new ArrayList[String]
+    val tokens = new ArrayBuffer[String]()
     try {
       stream.reset()
       while(stream.incrementToken()) {
-        tokens.add(stream.getAttribute(classOf[CharTermAttribute]).toString)
+        tokens += stream.getAttribute(classOf[CharTermAttribute]).toString
       }
     }
     catch {
