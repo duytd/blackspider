@@ -1,10 +1,10 @@
-package com.portia.models
+package com.portia.downloader
 
+import com.portia.models._
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat.dao.SalatMongoCursor
 import org.jsoup.Jsoup
-import com.mongodb.casbah.Imports.ObjectId
 import com.github.nscala_time.time.Imports._
 
 /** A dummy downloader which has a simple job of downloading content of crawled web nodes

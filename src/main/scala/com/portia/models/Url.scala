@@ -5,6 +5,7 @@ import com.novus.salat.dao.SalatDAO
 import com.mongodb.casbah.Imports.ObjectId
 import com.novus.salat.global._
 import com.portia.config.Constants
+import com.portia.downloader.Downloader
 
 /**
  * Single web node

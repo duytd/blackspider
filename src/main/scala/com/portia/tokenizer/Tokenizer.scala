@@ -1,13 +1,14 @@
-package com.portia.models
+package com.portia.tokenizer
 
 import java.io.StringReader
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import com.portia.analyzer.PortiaAnalyzer
-import org.apache.lucene.analysis._
+import org.apache.lucene.analysis.{CharArraySet,Analyzer}
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.util.Version
-import org.jsoup.Jsoup
+import com.portia.models._
+import com.portia.lib.Utils
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
@@ -26,7 +27,7 @@ class Tokenizer(lang:String = "en") {
 
   def tokenizeDoc(document: Document):Unit = {
     var tokens = new ArrayBuffer[String]
-    tokens = tokenize(Jsoup.parse(document.content).text())
+    tokens = tokenize(Utils.html2text(document.content))
     saveTokensToDB(document, tokens)
   }
 
@@ -36,7 +37,7 @@ class Tokenizer(lang:String = "en") {
     println("Tokenizing docs...")
     documents.foreach(doc => {
       tokenizeDoc(doc)
-      count = count+1
+      count = count + 1
       print("Processing: "+ count+"/"+d_size+"\r")
     })
     println("\nFinish tokenizing docs...")
@@ -53,7 +54,7 @@ class Tokenizer(lang:String = "en") {
     }
   }
 
-  /* Method to tokenize English document using Standard Analyzer (Lucene) */
+  /* Method to tokenize English document using Portia Analyzer */
   def tokenize(text:String): ArrayBuffer[String] = {
     val analyzer = new PortiaAnalyzer(STOP_WORDS)
     getTokens(analyzer, text)

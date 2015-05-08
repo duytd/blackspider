@@ -36,13 +36,12 @@ object ClassifierMain {
 
     })
 
-
     TestingUrlDAO.find(MongoDBObject.empty).foreach(u => {
       if (u.actualResult == u.expectedResult) {
         correctResult = correctResult + 1
       }
     })
 
-    println("Correct: "+correctResult+". Failed: "+testSize - failedResult+".Accuracy: "+correctResult.toDouble/testSize.toDouble*100+"%")
+    println("Correct: "+correctResult+". Failed: "+(testSize-correctResult)+".Accuracy: "+correctResult.toDouble/testSize.toDouble*100+"%")
   }
 }

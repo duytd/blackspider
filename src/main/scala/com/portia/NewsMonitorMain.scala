@@ -1,6 +1,6 @@
 package com.portia
 import com.portia.config.Constants
-import com.portia.models.NewsMonitor
+import com.portia.monitor.NewsMonitor
 /**
  * News monitor main program
  * @author duytd

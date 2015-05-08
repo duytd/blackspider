@@ -1,10 +1,12 @@
 /**
  * Configuration
- *
+ * Pre-defined constants
  * @author duytd
  */
 
 object Constants {
-  // a tuple consists of root url and rss source link
-  val TARGET_URLS = Array(("targetwebsite.com","http://targetwebsite.com/rss"))
+  // A tuple consists of root url, rss source link and language
+  val TARGET_URLS = Array(("www.yourtargetwebsite.com","http://www.yourtargetwebsite.com/rss","en"))
+  // Crawler name
+  val BOT_NAME = "PortiaBot <portia.com>"
 }

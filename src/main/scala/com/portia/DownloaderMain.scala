@@ -1,5 +1,5 @@
 package com.portia
-import com.portia.models.{Downloader}
+import com.portia.downloader.Downloader
 
 /**
  * Downloader main program
@@ -7,7 +7,7 @@ import com.portia.models.{Downloader}
  */
 object DownloaderMain {
   def main(args: Array[String]): Unit = {
-    var downloader = new Downloader
+    val downloader = new Downloader
     downloader.run
   }
 }

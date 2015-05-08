@@ -1,4 +1,6 @@
-package com.portia.models
+package com.portia.monitor
+
+import com.portia.models._
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import com.mongodb.casbah.Imports.ObjectId
