@@ -1,4 +1,7 @@
 package com.portia.models
+
+import com.novus.salat.dao.SalatMongoCursor
+
 import scala.collection.mutable.Queue
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -14,19 +17,21 @@ import com.mongodb.casbah.Imports.ObjectId
   */
 class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
   // Initialize an empty urls queue
-  val urlQueue = new Queue[(ObjectId, String)]
+  val urlQueue = new Queue[(ObjectId, String, ObjectId)] // childId, child url, parentId
+  var count = 0
+  val currentTime = System.currentTimeMillis()
 
   // If the site is crawled from the beginning, insert root url to the queue
   // Otherwise, load pending urls queue from the database to process
   if (!this.isResumeMode) {
-    val initialQueueItem = (new ObjectId, "http://"+rootUrl)
+    val initialQueueItem = (new ObjectId, "http://"+rootUrl, null)
     urlQueue += initialQueueItem
     Crawler.insertQueueItem(initialQueueItem, rootUrl)
     println("Start crawling "+rootUrl)
   }
   else {
     this.getQueueFromDB.foreach(item => {
-      urlQueue += ((item.uid, item.url))
+      urlQueue += ((item.uid, item.url, item.parentId))
     })
     println("Resume crawling "+rootUrl)
   }
@@ -43,9 +48,16 @@ class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
       val url = urlQueue.dequeue()
       this.removeQueueItem(url._1)
 
-      // Save this to DB if not exists
-      if (!Url.existedUrl(url._2)) {
-        Url.saveUrlToDB(url._1, url._2, rootUrl)
+      // Save this to DB
+      Url.saveUrlToDB(url._1, url._2, rootUrl)
+      count = count + 1
+
+      // Build edges
+      Edge.buildEdge(url._1, url._3)
+
+      if ((System.currentTimeMillis() - currentTime) == 1000) {
+        println(count)
+        return
       }
 
       // Get all children of the node
@@ -56,19 +68,13 @@ class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
         val newChild = anchor.asInstanceOf[Element].attr("href")
         val normalizedNewChild = Url.normalizeUrl(newChild,rootUrl)
 
+        //if the child not existed in queue and db, insert it the queue
         if (Url.isValid(newChild, rootUrl) && !existedQueueItem(normalizedNewChild)
           && !Url.existedUrl(normalizedNewChild)) {
           // Enqueue the child node
-          val newQueueItem:(ObjectId, String) = (new ObjectId, normalizedNewChild)
+          val newQueueItem:(ObjectId, String, ObjectId) = (new ObjectId, normalizedNewChild, url._1)
           urlQueue += newQueueItem
           Crawler.insertQueueItem(newQueueItem, rootUrl)
-
-          // Save the node to the database
-          Url.saveUrlToDB(newQueueItem._1, newQueueItem._2, rootUrl)
-
-          // With each child, build the edge with its parent and save to database
-          Edge.buildEdge(newQueueItem._1, url._1)
-
         }
       }
     }
@@ -84,13 +90,13 @@ class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
   }
 
   private def removeQueueItem(uid:ObjectId) = {
-    val dbQueue = DBQueueDAO.findOne(MongoDBObject("uid"->uid))
-    DBQueueDAO.remove(dbQueue.get)
-    println("Removed "+dbQueue.get.url+ " from queue database")
+    val dbQueue = DBQueueDAO.findOne(MongoDBObject("uid"->uid)).get
+    DBQueueDAO.remove(dbQueue)
+    println("Removed "+dbQueue.url+ " from queue database")
   }
 
-  private def getQueueFromDB:Array[DBQueue] = {
-    DBQueueDAO.find(MongoDBObject.empty).toArray
+  private def getQueueFromDB:SalatMongoCursor[DBQueue] = {
+    DBQueueDAO.find(MongoDBObject.empty)
   }
 }
 
@@ -98,8 +104,8 @@ class Crawler(isResumeMode:Boolean = false, rootUrl:String) {
 object Crawler {
   /** Put pending nodes to the database so that they can be accessed later
     */
-  def insertQueueItem(item:(ObjectId, String), rootUrl:String) = {
-    val dbQueue = new DBQueue(uid = item._1, url = item._2, rootUrl = rootUrl)
+  def insertQueueItem(item:(ObjectId, String, ObjectId), rootUrl:String) = {
+    val dbQueue = new DBQueue(uid = item._1, parentId = item._3, url = item._2, rootUrl = rootUrl)
     DBQueueDAO.insert(dbQueue)
     println("Insert "+dbQueue.url+ " to queue database")
   }

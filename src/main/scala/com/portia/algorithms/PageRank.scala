@@ -62,4 +62,22 @@ class PageRank {
     })
     results
   }
+
+  def getInBoundLinksByUrl(url_id: ObjectId):ArrayBuffer[Url] = {
+    var results:ArrayBuffer[Url] = new ArrayBuffer[Url]()
+    val edges = EdgeDAO.find(MongoDBObject("target"->url_id)).toList
+    edges.foreach(edge => {
+      results += Url.findById(edge.source).get
+    })
+    results
+  }
+
+  def getOutBoundLinksByUrl(url_id: ObjectId):ArrayBuffer[Url] = {
+    var results:ArrayBuffer[Url] = new ArrayBuffer[Url]()
+    val edges = EdgeDAO.find(MongoDBObject("source"->url_id)).toList
+    edges.foreach(edge => {
+      results += Url.findById(edge.source).get
+    })
+    results
+  }
 }

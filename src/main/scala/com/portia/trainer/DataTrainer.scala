@@ -11,8 +11,8 @@ import com.portia.lib.Utils
 /**
  * @author qmha, duytd
  */
-class DataTrainer {
-  val categoryFilePath = "/docs/categories.txt"
+class DataTrainer(lang:String = "en") {
+  val categoryFilePath = if (lang == "en") "/docs/categories.txt" else "/docs/vi_categories.txt"
 
   def run(): Unit = {
     val nbc:NaiveBayesClassifier = new NaiveBayesClassifier
@@ -31,7 +31,7 @@ class DataTrainer {
 
     //Build vocabulary tokens
     if (TokenDAO.find(MongoDBObject.empty).isEmpty) {
-      val tokenizer = new Tokenizer()
+      val tokenizer = new Tokenizer(lang = this.lang)
       val trainingDataSet = TrainingUrlDAO.find(MongoDBObject.empty).toArray
       val tds_size = trainingDataSet.length
       var t_count = 0
@@ -69,14 +69,21 @@ class DataTrainer {
 
     // Build limit sizes array
     // Each category will have 275 - 285 documents
-    allCategories.foreach(cat => {
-      if (cat.alias == "education") {
-        docLimitSizes += ((cat, 300))
-      }
-      else {
-        docLimitSizes += ((cat, Utils.getRandom(275, 285)))
-      }
-    })
+    if (lang == "en") {
+      allCategories.foreach(cat => {
+        if (cat.alias == "education") {
+          docLimitSizes += ((cat, 300))
+        }
+        else {
+          docLimitSizes += ((cat, Utils.getRandom(275, 285)))
+        }
+      })
+    }
+    else {
+      allCategories.foreach(cat => {
+        docLimitSizes += ((cat, Utils.getRandom(85, 115)))
+      })
+    }
 
     allUrls.foreach(url => {
       if (docLimitSizes.find(_._2 > 0).isEmpty)
@@ -124,7 +131,7 @@ class DataTrainer {
 
   def findTestingUrls(category: Category):ArrayBuffer[Url] = {
     val allUrls = UrlDAO.find(MongoDBObject.empty)
-    var maxSize = 20
+    var maxSize = if (this.lang == "en") 20 else 10
     var arrayBuffer = new ArrayBuffer[Url]()
     allUrls.foreach(url => {
       // If number of urls exceeds 20 then return

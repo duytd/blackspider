@@ -9,5 +9,5 @@ import com.mongodb.casbah.{MongoClient, MongoClientURI}
 object DB {
   private val uri = MongoClientURI("mongodb://localhost")
   private val mongoClient =  MongoClient(uri)
-  val mongoDB = mongoClient.getDB("blackspider")
+  val mongoDB = mongoClient.getDB("blackspider_test")
 }

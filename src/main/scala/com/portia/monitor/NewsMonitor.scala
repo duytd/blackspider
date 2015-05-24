@@ -46,7 +46,7 @@ class NewsMonitor(val rssSource:String, val rootUrl:String) {
 
       // Save un-existed news to the queues database to crawl later
       if(!Url.existedUrl(url) && !DBQueue.existedDBQueue(url)) {
-        val newQueueItem:(ObjectId, String) = (new ObjectId, url)
+        val newQueueItem:(ObjectId, String, ObjectId) = (new ObjectId, url, null)
         Crawler.insertQueueItem(newQueueItem, rootUrl)
       }
     })

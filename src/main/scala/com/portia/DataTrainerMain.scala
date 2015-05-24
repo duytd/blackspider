@@ -7,7 +7,8 @@ import com.portia.trainer.DataTrainer
  */
 object DataTrainerMain {
   def main(args: Array[String]): Unit = {
-    val dataTrainer = new DataTrainer
+    //Training Vietnamese Set
+    val dataTrainer = new DataTrainer(lang = "vi")
     dataTrainer.run()
   }
 }

@@ -11,7 +11,7 @@ import com.portia.downloader.Downloader
  * Single web node
  * @author duytd
  */
-case class Url (_id: ObjectId = new ObjectId, absPath:String = "", rootUrl:String = "", downloaded:Boolean = false, parseTime:String = null, pageRank:Double = 1.0, tokenized:Boolean = false)
+case class Url (_id: ObjectId = new ObjectId, absPath:String = "", rootUrl:String = "", downloaded:Boolean = false, parseTime:String = null, pageRank:Double = 1.0)
 
 object UrlDAO extends SalatDAO[Url, ObjectId](
   collection = DB.mongoDB("urls"))

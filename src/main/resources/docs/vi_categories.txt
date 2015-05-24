@@ -1,0 +1,10 @@
+world | Thế giới | /the-gioi/
+society | Xã hội | /xa-hoi/
+business | Kinh doanh | /kinh-doanh/
+tech | Công nghệ | /suc-manh-so/
+sports | Thế thao | /the-thao/
+politics | Chính trị | /chinh-tri/
+education | Giáo dục | /giao-duc-khuyen-hoc/
+health | Sức khỏe | /suc-khoe/
+art | Văn hóa | /van-hoa/
+entertainment | Giải trí | /giai-tri/

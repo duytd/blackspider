@@ -4,6 +4,7 @@ import java.io.StringReader
 import com.mongodb.WriteConcern
 import com.mongodb.casbah.commons.MongoDBObject
 import com.portia.analyzer.PortiaAnalyzer
+import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.{CharArraySet,Analyzer}
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.util.Version
@@ -56,7 +57,8 @@ class Tokenizer(lang:String = "en") {
 
   /* Method to tokenize English document using Portia Analyzer */
   def tokenize(text:String): ArrayBuffer[String] = {
-    val analyzer = new PortiaAnalyzer(STOP_WORDS)
+    val analyzer = if (this.lang == "en") new PortiaAnalyzer(STOP_WORDS)
+                    else new StandardAnalyzer(Version.LUCENE_30,STOP_WORDS)
     getTokens(analyzer, text)
   }
 
