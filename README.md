@@ -24,6 +24,6 @@ Extract features/tokens from web documents to classify
 Be able to classify new crawled web pages using Naïve Bayes algorithm
 
 ## Blackspider architecture
-![alt tag](https://github.com/duytd/blackspider/tree/master/images/overall-architecture.png)
+![Overall Architecture](https://github.com/duytd/blackspider/tree/master/images/overall-architecture.png)
 
 
