@@ -14,9 +14,9 @@ import com.mongodb.casbah.Imports.ObjectId
  * @author qmha, duytd
  */
 class NaiveBayesClassifier {
-  var examples:Array[TrainingUrl] = getExamples()
-  var vocabulary:Array[Token] = getVocabulary
-  var categories:Array[Category] = getCategories()
+  var examples:Array[TrainingUrl] = this.getExamples()
+  var vocabulary:Array[Token] = this.getVocabulary
+  var categories:Array[Category] = this.getCategories()
 
   /* Train the Portia Classifier
 * Pseudo code of the algorithm:
@@ -93,7 +93,7 @@ class NaiveBayesClassifier {
         return null
       }
       else {
-        println("Examining category:" + category.name)
+        //println("Examining category:" + category.name)
 
         tokens.par.foreach(tokenName => {
           // Find this token
@@ -109,7 +109,7 @@ class NaiveBayesClassifier {
 
         v_j = v_j + Math.log10(P_vj)
 
-        println("Score of category " + category.name + ": " + v_j)
+        //println("Score of category " + category.name + ": " + v_j)
 
         VNB += ((category, v_j))
       }

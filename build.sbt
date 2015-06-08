@@ -1,8 +1,9 @@
 name := "blackspider"
 
-organization := "org.portia"
+organization := "com.portia"
 
 version := "1.0"
+assemblyJarName in assembly := "portia.jar"
 
 scalaVersion := "2.11.6"
 
